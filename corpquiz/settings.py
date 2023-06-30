@@ -40,8 +40,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'drf_yasg',
     'user.apps.UserConfig',
     'api.apps.ApiConfig',
+    'quizes.apps.QuizesConfig',
 ]
 
 MIDDLEWARE = [
