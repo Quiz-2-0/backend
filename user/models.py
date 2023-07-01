@@ -11,6 +11,9 @@ class Department(models.Model):
         max_length=150
     )
 
+    def __str__(self):
+        return self.name
+
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password, **extra_fields):
@@ -64,6 +67,7 @@ class CustomUser(AbstractUser):
         _("avatar"),
         upload_to='user/avatar/',
         default=None,
+        blank=True,
         null=True
     )
     firstName = models.CharField(_("first name"), max_length=150)
@@ -72,7 +76,11 @@ class CustomUser(AbstractUser):
         _("patronymic"), max_length=150, blank=True
     )
     position = models.CharField(_("position"), max_length=150)
-    score = models.PositiveSmallIntegerField(help_text=_("score"), null=True)
+    score = models.PositiveSmallIntegerField(
+        help_text=_("score"),
+        blank=True,
+        null=True
+    )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = (

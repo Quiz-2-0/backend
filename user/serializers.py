@@ -40,11 +40,11 @@ class Base64ImageField(serializers.ImageField):
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
-    # avatar = Base64ImageField()
+    avatar = Base64ImageField()
 
     class Meta:
         model = User
-        fields = User.REQUIRED_FIELDS + ('patronymic', 'department', 'email')
+        fields = User.REQUIRED_FIELDS + ('patronymic', 'department', 'email', 'avatar', 'score')
 
     def create(self, validated_data):
         password = str(uuid.uuid1())[:8]
@@ -53,3 +53,10 @@ class UserCreateSerializer(serializers.ModelSerializer):
         user.save()
         password_mail(validated_data['email'], password)
         return user
+
+
+class UserResetPasswordSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ['email']
