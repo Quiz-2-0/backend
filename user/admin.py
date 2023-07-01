@@ -6,6 +6,14 @@ from user.models import User, Department
 class UserAdmin(admin.ModelAdmin):
     list_display = ('email', 'firstName', 'lastName')
     search_fields = ('email', 'firstName')
+    fieldsets = (
+        (None, {'fields': ('email', 'password', 'firstName', 'lastName', 'position', 'role')}),
+    )
+
+    def save_model(self, request, obj, form, change):
+        if not obj.password.startswith('pbkdf2_sha256'):
+            obj.set_password(obj.password)
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Department)
