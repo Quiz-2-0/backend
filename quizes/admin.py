@@ -7,6 +7,7 @@ from .models import (
     AssignedQuiz,
     Tag,
     QuizLevel,
+    Volume,
 )
 
 
@@ -43,3 +44,8 @@ class TagAdmin(admin.ModelAdmin):
 @admin.register(QuizLevel)
 class QuizLevelAdmin(admin.ModelAdmin):
     list_display = ('name',)
+
+
+@admin.register(Volume)
+class VolumeAdmin(admin.ModelAdmin):
+    list_display = ('name', 'quiz')

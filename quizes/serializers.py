@@ -1,5 +1,15 @@
 from rest_framework import serializers
-from quizes.models import Answer, Question, Quiz, Statistic, Tag
+from quizes.models import Answer, Question, Quiz, Statistic, Tag, Volume
+
+
+class VolumeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Volume
+        fields = [
+            "name",
+            "description",
+        ]
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -43,6 +53,9 @@ class QuizSerializer(serializers.ModelSerializer):
     directory = serializers.StringRelatedField()
     level = serializers.StringRelatedField()
     tags = TagSerializer(many=True, read_only=True)
+    volumes = VolumeSerializer(many=True, read_only=True)
+    isPassed = serializers.BooleanField()
+    appointed = serializers.BooleanField()
 
     class Meta:
         model = Quiz
@@ -57,6 +70,9 @@ class QuizSerializer(serializers.ModelSerializer):
             "question_amount",
             "tags",
             "questions",
+            "volumes",
+            "isPassed",
+            "appointed"
         ]
 
 

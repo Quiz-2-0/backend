@@ -25,9 +25,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-g!%))6$!%zn)n0oo!y!(9urimzeu-$o&%pt22lcgg&xf)+9dzq'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*', 'localhost', '80.87.106.133']
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000'
+]
+CORS_ORIGIN_WHITELIST = [
+    'http://localhost:8000'
+]
 
 
 # Application definition
@@ -147,3 +154,8 @@ AUTH_USER_MODEL = 'user.CustomUser'
 
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
+
+
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_URLS_REGEX = r'^/api/.*$'
+CORS_ALLOW_CREDENTIALS = True

@@ -190,3 +190,29 @@ class AssignedQuiz(models.Model):
 
     def __str__(self):
         return f'{self.user.email} - {self.quiz.name}'
+
+
+class Volume(models.Model):
+    quiz = models.ForeignKey(
+        Quiz,
+        on_delete=models.SET_NULL,
+        related_name='volumes',
+        verbose_name='Квиз',
+        blank=True,
+        null=True,
+    )
+    name = models.CharField(
+        max_length=200,
+        verbose_name='Наименование учебного материала'
+    )
+    description = models.CharField(
+        max_length=240,
+        verbose_name='Описание учебного материала'
+    )
+
+    class Meta:
+        verbose_name = 'Учебный материал'
+        verbose_name_plural = 'Учебные материалы'
+
+    def __str__(self):
+        return f'{self.name}'

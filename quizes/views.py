@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, viewsets, response, status
 from quizes import models, serializers
+from django.db.models import Exists, OuterRef
 
 
 class QuizViewSet(viewsets.ReadOnlyModelViewSet):
@@ -8,9 +9,21 @@ class QuizViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        directory = self.request.user.department
-        queryset = models.Quiz.objects.filter(directory=directory)
-        return queryset
+        if self.request.user.is_authenticated:
+            directory = self.request.user.department
+            user = self.request.user
+            queryset = models.Quiz.objects.filter(
+                directory=directory
+            ).annotate(
+                isPassed=Exists(models.Statistic.objects.filter(
+                    quiz__id=OuterRef('id'), user__id=user.id
+                )),
+                appointed=Exists(models.AssignedQuiz.objects.filter(
+                    quiz__id=OuterRef('id'), user__id=user.id
+                ))
+            )
+            return queryset
+        return response.Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
 class StatisticViewSet(viewsets.ViewSet):
@@ -23,6 +36,12 @@ class StatisticViewSet(viewsets.ViewSet):
         questions = request.data.get('questions')
         answers = models.Answer.objects.filter(question__quiz__id=quiz_id)
         wrong_answers = 0
+        if models.AssignedQuiz.objects.filter(
+            user=user_id, quiz=quiz_id
+        ).exists():
+            models.AssignedQuiz.objects.filter(
+                user=user_id, quiz=quiz_id
+            ).delete()
         for question in questions:
             if answers.filter(
                 question__id=question['id'], isAnswerRight=True
