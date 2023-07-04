@@ -35,7 +35,6 @@ class UserGetViewSet(generics.RetrieveAPIView):
     queryset = User.objects.all()
 
     def get(self, request, *args, **kwargs):
-        print(dir(request.user))
         if not request.user.is_authenticated:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
         serializer = UserCreateSerializer(request.user)
