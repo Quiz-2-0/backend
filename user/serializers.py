@@ -8,7 +8,7 @@ from django.core.files.base import ContentFile
 
 from django.utils.translation import gettext_lazy as _
 
-from user.models import User
+from user.models import User, Department
 from user.utils import password_mail
 
 
@@ -41,10 +41,16 @@ class Base64ImageField(serializers.ImageField):
 
 class UserCreateSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField()
+    department = serializers.SlugRelatedField(
+        slug_field='name',
+        queryset=Department.objects.all()
+    )
 
     class Meta:
         model = User
-        fields = User.REQUIRED_FIELDS + ('patronymic', 'department', 'email', 'avatar', 'score')
+        fields = User.REQUIRED_FIELDS + (
+            'patronymic', 'department', 'email', 'avatar', 'score'
+        )
 
     def create(self, validated_data):
         password = str(uuid.uuid1())[:8]
