@@ -30,7 +30,7 @@ class QuizLevel(models.Model):
         max_length=50, verbose_name='Наименование уровня'
     )
     description = models.CharField(
-        max_length=240, verbose_name='Описание уровня'
+        max_length=500, verbose_name='Описание уровня'
     )
 
     class Meta:
@@ -46,8 +46,7 @@ class Quiz(models.Model):
         max_length=200,
         verbose_name='Наименование квиза'
     )
-    description = models.CharField(
-        max_length=240,
+    description = models.TextField(
         verbose_name='Описание квиза'
     )
     image = models.ImageField(
@@ -94,8 +93,7 @@ class Quiz(models.Model):
 
 
 class Question(models.Model):
-    text = models.CharField(
-        max_length=240,
+    text = models.TextField(
         verbose_name='Вопрос'
     )
     image = models.ImageField(
@@ -129,7 +127,10 @@ class Answer(models.Model):
         blank=True
     )
     question = models.ForeignKey(
-        Question, on_delete=models.CASCADE, related_name='answers'
+        Question,
+        on_delete=models.CASCADE,
+        related_name='answers',
+        verbose_name='Вопрос',
     )
     is_right = models.BooleanField(verbose_name='правельный ответ')
 
@@ -202,11 +203,10 @@ class Volume(models.Model):
         null=True,
     )
     name = models.CharField(
-        max_length=200,
+        max_length=500,
         verbose_name='Наименование учебного материала'
     )
-    description = models.CharField(
-        max_length=240,
+    description = models.TextField(
         verbose_name='Описание учебного материала'
     )
 
