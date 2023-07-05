@@ -131,7 +131,7 @@ class Answer(models.Model):
     question = models.ForeignKey(
         Question, on_delete=models.CASCADE, related_name='answers'
     )
-    isAnswerRight = models.BooleanField(verbose_name='правельный ответ')
+    is_right = models.BooleanField(verbose_name='правельный ответ')
 
     class Meta:
         verbose_name = 'Ответ'

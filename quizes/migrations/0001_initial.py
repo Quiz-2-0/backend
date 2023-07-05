@@ -108,7 +108,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('text', models.CharField(max_length=240, verbose_name='Текст ответа')),
                 ('image', models.ImageField(blank=True, upload_to='answers/image/', verbose_name='изображение')),
-                ('isAnswerRight', models.BooleanField(verbose_name='правельный ответ')),
+                ('is_right', models.BooleanField(verbose_name='правельный ответ')),
                 ('question', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='answers', to='quizes.question')),
             ],
             options={

@@ -9,21 +9,23 @@ class QuizViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        if self.request.user.is_authenticated:
-            directory = self.request.user.department
-            user = self.request.user
-            queryset = models.Quiz.objects.filter(
-                directory=directory
-            ).annotate(
-                isPassed=Exists(models.Statistic.objects.filter(
-                    quiz__id=OuterRef('id'), user__id=user.id
-                )),
-                appointed=Exists(models.AssignedQuiz.objects.filter(
-                    quiz__id=OuterRef('id'), user__id=user.id
-                ))
-            )
-            return queryset
-        return response.Response(status=status.HTTP_401_UNAUTHORIZED)
+        if not self.request.user.is_authenticated:
+            return response.Response(status=status.HTTP_401_UNAUTHORIZED)
+        directory = self.request.user.department
+        user = self.request.user
+        new_queryset = models.Quiz.objects.select_related(
+            'directory', 'level'
+        ).prefetch_related('tags').filter(
+            directory=directory
+        ).annotate(
+            isPassed=Exists(models.Statistic.objects.filter(
+                quiz__id=OuterRef('id'), user__id=user.id
+            )),
+            appointed=Exists(models.AssignedQuiz.objects.filter(
+                quiz__id=OuterRef('id'), user__id=user.id
+            ))
+        )
+        return new_queryset
 
 
 class StatisticViewSet(viewsets.ViewSet):
@@ -44,7 +46,7 @@ class StatisticViewSet(viewsets.ViewSet):
             ).delete()
         for question in questions:
             if answers.filter(
-                question__id=question['id'], isAnswerRight=True
+                question__id=question['id'], is_right=True
             )[0].id != question['answers'][0]['id']:
                 wrong_answers += 1
         if models.Statistic.objects.filter(

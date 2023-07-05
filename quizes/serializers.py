@@ -24,6 +24,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class AnswerSerializer(serializers.ModelSerializer):
+    isAnswerRight = serializers.BooleanField(source='is_right')
 
     class Meta:
         model = Answer

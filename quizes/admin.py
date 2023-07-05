@@ -18,7 +18,7 @@ class QuizAdmin(admin.ModelAdmin):
 
 @admin.register(Answer)
 class AnswerAdmin(admin.ModelAdmin):
-    list_display = ('text', 'question', 'isAnswerRight')
+    list_display = ('text', 'question', 'is_right')
 
 
 @admin.register(Question)
