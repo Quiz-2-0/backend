@@ -28,40 +28,71 @@ class QuizViewSet(viewsets.ReadOnlyModelViewSet):
         return new_queryset
 
 
+class AnswerViewSet(viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request, id):
+        user = self.request.user
+        quiz = get_object_or_404(models.Quiz, id=id)
+        answer_id = request.data.get('id')
+        answer = get_object_or_404(models.Answer, id=answer_id)
+
+        # Создание записи UserAnswer
+        statistic, _ = models.Statistic.objects.get_or_create(user=user,
+                                                              quiz=quiz)
+        user_answer = models.UserAnswer.objects.create(statistic=statistic,
+                                                       answer=answer)
+
+        # Обновление статистики в модели Statistic
+        statistic.wrong_answers = statistic.user_answers.filter(
+            answer__is_right=False).count()
+        statistic.save()
+
+        # Подготовка данных для ответа
+        response_data = {
+            'id': id,
+            'currentUserAnswer': answer_id,
+            'amountOfRightAnswers': statistic.count_questions - statistic.wrong_answers,
+            'progressOfAnswers': user_answer.id
+        }
+
+        return response.Response(response_data, status=status.HTTP_201_CREATED)
+
+
 class StatisticViewSet(viewsets.ViewSet):
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = serializers.StatisticSerializer
 
-    def collect_statistic(self, request):
-        user_id = self.request.user.id
-        quiz_id = request.data.get('id')
-        questions = request.data.get('questions')
-        answers = models.Answer.objects.filter(question__quiz__id=quiz_id)
-        wrong_answers = 0
-        if models.AssignedQuiz.objects.filter(
-            user=user_id, quiz=quiz_id
-        ).exists():
-            models.AssignedQuiz.objects.filter(
-                user=user_id, quiz=quiz_id
-            ).delete()
-        for question in questions:
-            if answers.filter(
-                question__id=question['id'], is_right=True
-            )[0].id != question['answers'][0]['id']:
-                wrong_answers += 1
-        if models.Statistic.objects.filter(
-            user=user_id, quiz=quiz_id
-        ).exists():
-            statistic = get_object_or_404(
-                models.Statistic, user=user_id, quiz=quiz_id
-            )
-            if statistic.wrong_answers > wrong_answers:
-                statistic.wrong_answers = wrong_answers
-                statistic.save()
-            return response.Response(status=status.HTTP_201_CREATED)
-        serializer = serializers.StatisticSerializer(data={
-            'user': user_id, 'quiz': quiz_id, 'wrong_answers': wrong_answers
-        })
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return response.Response(status=status.HTTP_201_CREATED)
+    def list(self, request, id):
+        statistic = models.Statistic.objects.filter(
+            user=request.user, id=id
+        ).first()
+        if statistic is None:
+            return response.Response(status=status.HTTP_404_NOT_FOUND)
+        user_answers = models.UserAnswer.objects.filter(statistic=statistic)
+        data = []
+        for user_answer in user_answers:
+            question = user_answer.answer.question
+            is_right = user_answer.answer.is_right
+            explanation = user_answer.answer.explanation if not is_right else None
+            data.append({
+                'question': question.text,
+                'answer': user_answer.answer.text,
+                'isRight': is_right,
+                'explanation': explanation
+            })
+        return response.Response(data)
+
+
+class LastQuestionViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.LastQuestionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return models.LastQuestion.objects.filter(statistic__user=user)
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        statistic_id = self.request.data.get('statistic_id')
+        statistic = models.Statistic.objects.get(id=statistic_id, user=user)
+        serializer.save(statistic=statistic)

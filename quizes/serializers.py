@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from quizes.models import Answer, Question, Quiz, Statistic, Tag, Volume
+from quizes.models import (
+    Answer, Question, Quiz, Statistic, Tag, Volume, LastQuestion)
 
 
 class VolumeSerializer(serializers.ModelSerializer):
@@ -77,7 +78,32 @@ class QuizSerializer(serializers.ModelSerializer):
         ]
 
 
+class StatisticAnswerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Answer
+        fields = [
+            "text",
+            "is_right",
+            "explanation"
+        ]
+
+
+class StatisticQuestionSerializer(serializers.ModelSerializer):
+    answers = StatisticAnswerSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Question
+        fields = [
+            "text",
+            "answers",
+        ]
+
+
 class StatisticSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()
+    quiz = QuizSerializer()
+    questions = StatisticQuestionSerializer(
+        source='quiz.questions', many=True, read_only=True)
 
     class Meta:
         model = Statistic
@@ -85,5 +111,23 @@ class StatisticSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "quiz",
+            "questions",
             "wrong_answers",
         ]
+
+
+class LastQuestionSerializer(serializers.ModelSerializer):
+    statistic = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = LastQuestion
+        fields = ['id', 'statistic', 'question']
+
+    def create(self, validated_data):
+        statistic = validated_data['statistic']
+        question = validated_data['question']
+        last_question = LastQuestion.objects.create(
+            statistic=statistic,
+            question=question
+        )
+        return last_question
