@@ -10,9 +10,9 @@ router_v1.register(
 )
 
 urlpatterns = [
+     path('', include(router_v1.urls)),
      path('<int:id>/answer/', AnswerViewSet.as_view({'post': 'create'}),
           name='answer'),
-     path('', include(router_v1.urls)),
 ]
 
 urlpatterns += router_v1.urls
