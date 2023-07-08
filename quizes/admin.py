@@ -8,6 +8,8 @@ from .models import (
     Tag,
     QuizLevel,
     Volume,
+    UserAnswer,
+    LastQuestion
 )
 
 
@@ -49,3 +51,8 @@ class QuizLevelAdmin(admin.ModelAdmin):
 @admin.register(Volume)
 class VolumeAdmin(admin.ModelAdmin):
     list_display = ('name', 'quiz')
+
+
+@admin.register(UserAnswer)
+class UserAnswerAdmin(admin.ModelAdmin):
+    list_display = ('statistic', 'answer')

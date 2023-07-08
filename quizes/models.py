@@ -17,7 +17,7 @@ class Tag(models.Model):
         blank=True
     )
 
-    class Meta():
+    class Meta:
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
 
@@ -30,7 +30,7 @@ class QuizLevel(models.Model):
         max_length=50, verbose_name='Наименование уровня'
     )
     description = models.CharField(
-        max_length=240, verbose_name='Описание уровня'
+        max_length=500, verbose_name='Описание уровня'
     )
 
     class Meta:
@@ -46,8 +46,7 @@ class Quiz(models.Model):
         max_length=200,
         verbose_name='Наименование квиза'
     )
-    description = models.CharField(
-        max_length=240,
+    description = models.TextField(
         verbose_name='Описание квиза'
     )
     image = models.ImageField(
@@ -94,8 +93,7 @@ class Quiz(models.Model):
 
 
 class Question(models.Model):
-    text = models.CharField(
-        max_length=240,
+    text = models.TextField(
         verbose_name='Вопрос'
     )
     image = models.ImageField(
@@ -108,6 +106,11 @@ class Question(models.Model):
         related_name='questions',
         on_delete=models.CASCADE,
         verbose_name='Квизы',
+    )
+
+    explanation = models.TextField(
+        verbose_name='Объяснение',
+        blank=True
     )
 
     class Meta:
@@ -129,9 +132,12 @@ class Answer(models.Model):
         blank=True
     )
     question = models.ForeignKey(
-        Question, on_delete=models.CASCADE, related_name='answers'
+        Question,
+        on_delete=models.CASCADE,
+        related_name='answers',
+        verbose_name='Вопрос',
     )
-    is_right = models.BooleanField(verbose_name='правельный ответ')
+    is_right = models.BooleanField(verbose_name='правильный ответ')
 
     class Meta:
         verbose_name = 'Ответ'
@@ -154,9 +160,10 @@ class Statistic(models.Model):
         related_name='statistic',
         verbose_name='Квиз'
     )
-    wrong_answers = models.SmallIntegerField(
-        verbose_name='Неправильные ответы'
-    )
+
+    @property
+    def wrong_answers_count(self):
+        return self.user_answers.filter(answer__is_right=False).count()
 
     @property
     def count_questions(self):
@@ -202,11 +209,10 @@ class Volume(models.Model):
         null=True,
     )
     name = models.CharField(
-        max_length=200,
+        max_length=500,
         verbose_name='Наименование учебного материала'
     )
-    description = models.CharField(
-        max_length=240,
+    description = models.TextField(
         verbose_name='Описание учебного материала'
     )
 
@@ -216,3 +222,47 @@ class Volume(models.Model):
 
     def __str__(self):
         return f'{self.name}'
+
+
+class UserAnswer(models.Model):
+    statistic = models.ForeignKey(
+        Statistic,
+        on_delete=models.CASCADE,
+        related_name='user_answers',
+        verbose_name='Статистика квиза'
+    )
+    answer = models.ForeignKey(
+        Answer,
+        related_name='user_answers',
+        on_delete=models.CASCADE,
+        verbose_name='Ответ'
+    )
+
+    class Meta:
+        verbose_name = 'Ответ пользователя'
+        verbose_name_plural = 'Ответ пользователя'
+
+    def __str__(self):
+        return f'{self.statistic.user} - {self.answer.is_right}'
+
+
+class LastQuestion(models.Model):
+    statistic = models.OneToOneField(
+        Statistic,
+        on_delete=models.CASCADE,
+        related_name='last_question',
+        verbose_name='Последний отвеченный вопрос'
+    )
+    question = models.ForeignKey(
+        Question,
+        related_name='last_question',
+        on_delete=models.CASCADE,
+        verbose_name='Вопрос'
+    )
+
+    class Meta:
+        verbose_name = 'Последний вопрос'
+        verbose_name_plural = 'Последние вопросы'
+
+    def __str__(self):
+        return f'{self.statistic} - {self.question}'
