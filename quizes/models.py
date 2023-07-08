@@ -17,7 +17,7 @@ class Tag(models.Model):
         blank=True
     )
 
-    class Meta():
+    class Meta:
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
 
@@ -108,6 +108,11 @@ class Question(models.Model):
         verbose_name='Квизы',
     )
 
+    explanation = models.TextField(
+        verbose_name='Объяснение',
+        blank=True
+    )
+
     class Meta:
         verbose_name = 'Вопрос'
         verbose_name_plural = 'Вопросы'
@@ -132,7 +137,7 @@ class Answer(models.Model):
         related_name='answers',
         verbose_name='Вопрос',
     )
-    is_right = models.BooleanField(verbose_name='правельный ответ')
+    is_right = models.BooleanField(verbose_name='правильный ответ')
 
     class Meta:
         verbose_name = 'Ответ'
@@ -155,9 +160,10 @@ class Statistic(models.Model):
         related_name='statistic',
         verbose_name='Квиз'
     )
-    wrong_answers = models.SmallIntegerField(
-        verbose_name='Неправильные ответы'
-    )
+
+    @property
+    def wrong_answers_count(self):
+        return self.user_answers.filter(answer__is_right=False).count()
 
     @property
     def count_questions(self):
@@ -216,3 +222,47 @@ class Volume(models.Model):
 
     def __str__(self):
         return f'{self.name}'
+
+
+class UserAnswer(models.Model):
+    statistic = models.ForeignKey(
+        Statistic,
+        on_delete=models.CASCADE,
+        related_name='user_answers',
+        verbose_name='Статистика квиза'
+    )
+    answer = models.ForeignKey(
+        Answer,
+        related_name='user_answers',
+        on_delete=models.CASCADE,
+        verbose_name='Ответ'
+    )
+
+    class Meta:
+        verbose_name = 'Ответ пользователя'
+        verbose_name_plural = 'Ответ пользователя'
+
+    def __str__(self):
+        return f'{self.statistic.user} - {self.answer.is_right}'
+
+
+class LastQuestion(models.Model):
+    statistic = models.OneToOneField(
+        Statistic,
+        on_delete=models.CASCADE,
+        related_name='last_question',
+        verbose_name='Последний отвеченный вопрос'
+    )
+    question = models.ForeignKey(
+        Question,
+        related_name='last_question',
+        on_delete=models.CASCADE,
+        verbose_name='Вопрос'
+    )
+
+    class Meta:
+        verbose_name = 'Последний вопрос'
+        verbose_name_plural = 'Последние вопросы'
+
+    def __str__(self):
+        return f'{self.statistic} - {self.question}'

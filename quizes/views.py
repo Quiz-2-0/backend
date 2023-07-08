@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import permissions, viewsets, response, status
+from rest_framework import permissions, viewsets, response, status, mixins
 from quizes import models, serializers
 from django.db.models import Exists, OuterRef
 
@@ -28,40 +28,46 @@ class QuizViewSet(viewsets.ReadOnlyModelViewSet):
         return new_queryset
 
 
-class StatisticViewSet(viewsets.ViewSet):
+class AnswerViewSet(viewsets.ViewSet):
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = serializers.StatisticSerializer
 
-    def collect_statistic(self, request):
-        user_id = self.request.user.id
-        quiz_id = request.data.get('id')
-        questions = request.data.get('questions')
-        answers = models.Answer.objects.filter(question__quiz__id=quiz_id)
-        wrong_answers = 0
-        if models.AssignedQuiz.objects.filter(
-            user=user_id, quiz=quiz_id
+    def create(self, request, id):
+        user = self.request.user
+        quiz = get_object_or_404(models.Quiz, id=id)
+        answer_id = request.data.get('id')
+        answer = get_object_or_404(models.Answer, id=answer_id)
+
+        statistic, _ = models.Statistic.objects.get_or_create(
+            user=user, quiz=quiz
+        )
+
+        if models.UserAnswer.objects.filter(
+            statistic=statistic, answer__question=answer.question
         ).exists():
-            models.AssignedQuiz.objects.filter(
-                user=user_id, quiz=quiz_id
-            ).delete()
-        for question in questions:
-            if answers.filter(
-                question__id=question['id'], is_right=True
-            )[0].id != question['answers'][0]['id']:
-                wrong_answers += 1
-        if models.Statistic.objects.filter(
-            user=user_id, quiz=quiz_id
-        ).exists():
-            statistic = get_object_or_404(
-                models.Statistic, user=user_id, quiz=quiz_id
+            user_answer = get_object_or_404(
+                models.UserAnswer,
+                statistic=statistic,
+                answer__question=answer.question
             )
-            if statistic.wrong_answers > wrong_answers:
-                statistic.wrong_answers = wrong_answers
-                statistic.save()
-            return response.Response(status=status.HTTP_201_CREATED)
-        serializer = serializers.StatisticSerializer(data={
-            'user': user_id, 'quiz': quiz_id, 'wrong_answers': wrong_answers
-        })
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+            user_answer.answer = answer
+        else:
+            user_answer = models.UserAnswer.objects.create(
+                statistic=statistic, answer=answer
+            )
+        user_answer.save()
+
         return response.Response(status=status.HTTP_201_CREATED)
+
+
+class StatisticViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    serializer_class = serializers.StatisticAnswerSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        statistic = models.Statistic.objects.filter(
+            user=self.request.user, id=self.kwargs.get('id')
+        ).first()
+        if statistic is None:
+            return response.Response(status=status.HTTP_404_NOT_FOUND)
+        new_queryset = models.UserAnswer.objects.filter(statistic=statistic)
+        return new_queryset
