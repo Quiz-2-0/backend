@@ -51,7 +51,9 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     def get_is_answered(self, obj):
         user = self.context['request'].user
-        statistic = get_object_or_404(Statistic, user=user, quiz=obj.quiz)
+        statistic = Statistic.objects.filter(user=user, quiz=obj.quiz).first()
+        if statistic is None:
+            return False
         return UserAnswer.objects.filter(
             statistic=statistic, answer__question=obj
         ).exists()
