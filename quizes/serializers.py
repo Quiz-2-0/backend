@@ -1,6 +1,14 @@
 from rest_framework import serializers
+from django.shortcuts import get_object_or_404
 from quizes.models import (
-    Answer, Question, Quiz, Statistic, Tag, Volume, LastQuestion)
+    Answer,
+    Question,
+    Quiz,
+    UserAnswer,
+    Tag,
+    Volume,
+    Statistic
+)
 
 
 class VolumeSerializer(serializers.ModelSerializer):
@@ -39,6 +47,14 @@ class AnswerSerializer(serializers.ModelSerializer):
 
 class QuestionSerializer(serializers.ModelSerializer):
     answers = AnswerSerializer(many=True, read_only=True)
+    is_answered = serializers.SerializerMethodField()
+
+    def get_is_answered(self, obj):
+        user = self.context['request'].user
+        statistic = get_object_or_404(Statistic, user=user, quiz=obj.quiz)
+        return UserAnswer.objects.filter(
+            statistic=statistic, answer__question=obj
+        ).exists()
 
     class Meta:
         model = Question
@@ -47,6 +63,7 @@ class QuestionSerializer(serializers.ModelSerializer):
             "image",
             "text",
             "answers",
+            "is_answered"
         ]
 
 
@@ -79,55 +96,16 @@ class QuizSerializer(serializers.ModelSerializer):
 
 
 class StatisticAnswerSerializer(serializers.ModelSerializer):
+    question = serializers.CharField(source='answer.question.text')
+    answer = serializers.StringRelatedField()
+    isRight = serializers.BooleanField(source='answer.is_right')
+    explanation = serializers.CharField(source='answer.question.explanation')
+
     class Meta:
-        model = Answer
+        model = UserAnswer
         fields = [
-            "text",
-            "is_right",
-            "explanation"
+            "question",
+            "answer",
+            "isRight",
+            "explanation",
         ]
-
-
-class StatisticQuestionSerializer(serializers.ModelSerializer):
-    answers = StatisticAnswerSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Question
-        fields = [
-            "text",
-            "answers",
-        ]
-
-
-class StatisticSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField()
-    quiz = QuizSerializer()
-    questions = StatisticQuestionSerializer(
-        source='quiz.questions', many=True, read_only=True)
-
-    class Meta:
-        model = Statistic
-        fields = [
-            "id",
-            "user",
-            "quiz",
-            "questions",
-            "wrong_answers",
-        ]
-
-
-class LastQuestionSerializer(serializers.ModelSerializer):
-    statistic = serializers.PrimaryKeyRelatedField(read_only=True)
-
-    class Meta:
-        model = LastQuestion
-        fields = ['id', 'statistic', 'question']
-
-    def create(self, validated_data):
-        statistic = validated_data['statistic']
-        question = validated_data['question']
-        last_question = LastQuestion.objects.create(
-            statistic=statistic,
-            question=question
-        )
-        return last_question

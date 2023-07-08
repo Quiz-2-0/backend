@@ -110,6 +110,11 @@ class Question(models.Model):
         verbose_name='Квизы',
     )
 
+    explanation = models.TextField(
+        verbose_name='Объяснение',
+        blank=True
+    )
+
     class Meta:
         verbose_name = 'Вопрос'
         verbose_name_plural = 'Вопросы'
@@ -132,11 +137,6 @@ class Answer(models.Model):
         Question, on_delete=models.CASCADE, related_name='answers'
     )
     is_right = models.BooleanField(verbose_name='правильный ответ')
-    explanation = models.CharField(
-        max_length=240,
-        verbose_name='Объяснение',
-        blank=True
-    )
 
     class Meta:
         verbose_name = 'Ответ'
@@ -233,9 +233,17 @@ class UserAnswer(models.Model):
     )
     answer = models.ForeignKey(
         Answer,
+        related_name='user_answers',
         on_delete=models.CASCADE,
         verbose_name='Ответ'
     )
+
+    class Meta:
+        verbose_name = 'Ответ пользователя'
+        verbose_name_plural = 'Ответ пользователя'
+
+    def __str__(self):
+        return f'{self.statistic.user} - {self.answer.is_right}'
 
 
 class LastQuestion(models.Model):
@@ -247,6 +255,7 @@ class LastQuestion(models.Model):
     )
     question = models.ForeignKey(
         Question,
+        related_name='last_question',
         on_delete=models.CASCADE,
         verbose_name='Вопрос'
     )
