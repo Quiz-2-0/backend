@@ -113,6 +113,10 @@ class Question(models.Model):
         blank=True
     )
 
+    @property
+    def right_answer(self):
+        return self.answers.filter(is_right=True).first().text
+
     class Meta:
         verbose_name = 'Вопрос'
         verbose_name_plural = 'Вопросы'
@@ -145,36 +149,6 @@ class Answer(models.Model):
 
     def __str__(self):
         return f'{self.text}'
-
-
-class Statistic(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='statistic',
-        verbose_name='пользователь'
-    )
-    quiz = models.ForeignKey(
-        Quiz,
-        on_delete=models.CASCADE,
-        related_name='statistic',
-        verbose_name='Квиз'
-    )
-
-    @property
-    def wrong_answers_count(self):
-        return self.user_answers.filter(answer__is_right=False).count()
-
-    @property
-    def count_questions(self):
-        return self.quiz.questions.count()
-
-    class Meta:
-        verbose_name = 'Статистика квиза'
-        verbose_name_plural = 'Статистика квизов'
-
-    def __str__(self):
-        return f'{self.user.email} - {self.quiz.name}'
 
 
 class AssignedQuiz(models.Model):
@@ -225,11 +199,17 @@ class Volume(models.Model):
 
 
 class UserAnswer(models.Model):
-    statistic = models.ForeignKey(
-        Statistic,
+    user = models.ForeignKey(
+        User,
         on_delete=models.CASCADE,
         related_name='user_answers',
-        verbose_name='Статистика квиза'
+        verbose_name='пользователь'
+    )
+    quiz = models.ForeignKey(
+        Quiz,
+        on_delete=models.CASCADE,
+        related_name='user_answers',
+        verbose_name='Квиз'
     )
     answer = models.ForeignKey(
         Answer,
@@ -238,31 +218,13 @@ class UserAnswer(models.Model):
         verbose_name='Ответ'
     )
 
+    @property
+    def count_questions(self):
+        return self.quiz.questions.count()
+
     class Meta:
         verbose_name = 'Ответ пользователя'
-        verbose_name_plural = 'Ответ пользователя'
+        verbose_name_plural = 'Ответы пользователя'
 
     def __str__(self):
-        return f'{self.statistic.user} - {self.answer.is_right}'
-
-
-class LastQuestion(models.Model):
-    statistic = models.OneToOneField(
-        Statistic,
-        on_delete=models.CASCADE,
-        related_name='last_question',
-        verbose_name='Последний отвеченный вопрос'
-    )
-    question = models.ForeignKey(
-        Question,
-        related_name='last_question',
-        on_delete=models.CASCADE,
-        verbose_name='Вопрос'
-    )
-
-    class Meta:
-        verbose_name = 'Последний вопрос'
-        verbose_name_plural = 'Последние вопросы'
-
-    def __str__(self):
-        return f'{self.statistic} - {self.question}'
+        return f'{self.user.email} - {self.answer.text} {self.answer.is_right}'

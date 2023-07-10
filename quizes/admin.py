@@ -3,13 +3,11 @@ from .models import (
     Quiz,
     Answer,
     Question,
-    Statistic,
     AssignedQuiz,
     Tag,
     QuizLevel,
     Volume,
     UserAnswer,
-    LastQuestion
 )
 
 
@@ -26,11 +24,6 @@ class AnswerAdmin(admin.ModelAdmin):
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
     list_display = ('text', 'quiz')
-
-
-@admin.register(Statistic)
-class StatisticAdmin(admin.ModelAdmin):
-    list_display = ('user', 'quiz')
 
 
 @admin.register(AssignedQuiz)
@@ -55,4 +48,4 @@ class VolumeAdmin(admin.ModelAdmin):
 
 @admin.register(UserAnswer)
 class UserAnswerAdmin(admin.ModelAdmin):
-    list_display = ('statistic', 'answer')
+    list_display = ('quiz', 'user', 'answer')
