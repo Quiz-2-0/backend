@@ -2,9 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
   build_and_push_to_docker_hub:
@@ -44,7 +46,7 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.PASSPHRASE }}
         script: |
-          sudo docker-compose stop
+          sudo docker-compose down
           sudo docker-compose rm backend
           sudo docker pull ${{ secrets.DOCKER_USERNAME }}/corpquiz-backend:latest
           rm -f .env
