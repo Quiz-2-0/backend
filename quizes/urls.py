@@ -6,10 +6,10 @@ from .views import QuizViewSet, UserAnswerViewSet, StatisticViewSet
 router_v1 = DefaultRouter()
 router_v1.register('', QuizViewSet, basename='quizes')
 router_v1.register(
-     '(?P<id>[\d]+)/answer', UserAnswerViewSet, basename='user_unswer'
+     '(?P<quiz_id>[\d]+)/answer', UserAnswerViewSet, basename='user_unswer'
 )
 router_v1.register(
-     '(?P<id>[\d]+)/statistic', StatisticViewSet, basename='statistic'
+     '(?P<quiz_id>[\d]+)/statistic', StatisticViewSet, basename='statistic'
 )
 
 urlpatterns = [  
