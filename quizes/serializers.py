@@ -161,6 +161,17 @@ class UserAnswerSaveSerializer(serializers.ModelSerializer):
                 assigned.delete()
         return user_answer
 
+    def validate(self, attrs):
+        quiz = attrs['quiz']
+        answer = attrs['answer']
+
+        if answer.question.quiz != quiz:
+            raise serializers.ValidationError({
+                'answer': 'Ответ не принадлежит данному квизу.'}
+            )
+
+        return attrs
+
     class Meta:
         model = UserAnswer
         fields = [
