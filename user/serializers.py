@@ -1,5 +1,6 @@
 import base64
 import uuid
+import re
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import exceptions, serializers
@@ -16,10 +17,14 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["role"] = serializers.CharField()
+        self.fields["email"] = serializers.EmailField()
 
     def validate(self, attrs):
         result = super().validate(attrs)
         email = self.context['request'].data['email']
+        validate_password = self.context['request'].data['password']
+        if re.findall(r"\s", validate_password):
+            raise serializers.ValidationError('пароль содержит пробелы')
         role = self.context['request'].data['role']
         user = User.objects.get(email=email)
         result.pop('refresh')

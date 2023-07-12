@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from django.shortcuts import get_object_or_404
 from quizes.models import (
     Answer,
     Question,
@@ -78,12 +77,12 @@ class QuizSerializer(serializers.ModelSerializer):
     def get_isPassed(self, obj):
         user = self.context['request'].user
         questions = obj.question_amount
-        right_answers = UserAnswer.objects.filter(
+        answers = UserAnswer.objects.filter(
             user=user,
             quiz=obj,
-            answer__is_right=True
-        ).count()
-        return questions == right_answers
+        )
+        return (questions == answers.count() and
+                answers.filter(answer__is_right=True).count() > 0)
 
     class Meta:
         model = Quiz
@@ -136,26 +135,21 @@ class UserAnswerSaveSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         answer = validated_data.pop("answer")
-        if UserAnswer.objects.filter(
+        user_answer = UserAnswer.objects.filter(
             **validated_data,
             answer__question=answer.question
-        ).exists():
-            user_answer = get_object_or_404(
-                UserAnswer,
-                **validated_data,
-                answer__question=answer.question
-            )
-            user_answer.answer = answer
-            user_answer.save()
-        else:
+        ).first()
+        if not user_answer:
             user_answer = UserAnswer.objects.create(
-                **validated_data, answer=answer
+                **validated_data,
+                answer=answer
             )
-        right_answers = UserAnswer.objects.filter(
-            **validated_data,
-            answer__is_right=True
-        ).count()
-        if answer.question.quiz.question_amount == right_answers:
+        user_answer.answer = answer
+        user_answer.save()
+        answers = UserAnswer.objects.filter(**validated_data)
+        quiz = validated_data.get("quiz")
+        if (quiz.question_amount == answers.count() and
+                answers.filter(answer__is_right=True).count() > 0):
             assigned = AssignedQuiz.objects.filter(**validated_data).first()
             if assigned:
                 assigned.delete()
@@ -167,7 +161,7 @@ class UserAnswerSaveSerializer(serializers.ModelSerializer):
 
         if answer.question.quiz != quiz:
             raise serializers.ValidationError({
-                'answer': 'Ответ не принадлежит данному квизу.'}
+                'error': 'Ответ не принадлежит данному квизу.'}
             )
 
         return attrs

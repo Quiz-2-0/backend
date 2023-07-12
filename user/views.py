@@ -1,11 +1,10 @@
 import uuid
 from django.shortcuts import get_object_or_404
 
-from rest_framework import mixins, viewsets, status, generics
+from rest_framework import mixins, viewsets, status, generics, permissions
 from rest_framework.response import Response
 
 from user.models import User
-from user.permission import AdminOrReadOnly
 from user.serializers import UserCreateSerializer, UserResetPasswordSerializer
 from user.utils import password_mail
 
@@ -18,7 +17,7 @@ class UserViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
 class UserResetPasswordViewSet(generics.CreateAPIView):
     serializer_class = UserResetPasswordSerializer
     queryset = User.objects.all()
-    permission_classes = AdminOrReadOnly
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         email = request.data.get('email')
