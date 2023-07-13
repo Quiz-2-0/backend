@@ -55,5 +55,5 @@ class StatisticViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         new_queryset = models.UserAnswer.objects.filter(
             user=user,
             quiz__id=quiz_id
-        )
+        ).order_by('answer__question__id')
         return new_queryset
