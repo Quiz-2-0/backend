@@ -4,9 +4,14 @@ from django.shortcuts import get_object_or_404
 from rest_framework import mixins, viewsets, status, generics, permissions
 from rest_framework.response import Response
 
-from user.models import User
-from user.serializers import UserCreateSerializer, UserResetPasswordSerializer
+from user.models import User, Department
+from user.serializers import (
+    UserCreateSerializer,
+    UserResetPasswordSerializer,
+    DepartmentSerializer
+)
 from user.utils import password_mail
+from user.permission import AdminOrReadOnly
 
 
 class UserViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
@@ -38,3 +43,9 @@ class UserGetViewSet(generics.RetrieveAPIView):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
         serializer = UserCreateSerializer(request.user)
         return Response(status=status.HTTP_200_OK, data=serializer.data)
+
+
+class DepartmentViewSet(viewsets.ModelViewSet):
+    serializer_class = DepartmentSerializer
+    queryset = Department.objects.all()
+    permission_classes = (AdminOrReadOnly,)
