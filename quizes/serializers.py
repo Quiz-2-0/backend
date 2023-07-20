@@ -6,7 +6,8 @@ from quizes.models import (
     UserAnswer,
     Tag,
     Volume,
-    AssignedQuiz
+    AssignedQuiz,
+    QuizLevel,
 )
 
 
@@ -173,3 +174,9 @@ class UserAnswerSaveSerializer(serializers.ModelSerializer):
             "quiz",
             "answer",
         ]
+
+
+class QuizLevelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QuizLevel
+        fields = '__all__'

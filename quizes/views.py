@@ -57,3 +57,54 @@ class StatisticViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
             quiz__id=quiz_id
         ).order_by('answer__question__id')
         return new_queryset
+
+
+class QuizLevelViewSet(viewsets.ModelViewSet):
+    queryset = models.QuizLevel.objects.all()
+    serializer_class = serializers.QuizLevelSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = serializers.QuizLevelSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return response.Response(serializer.data,
+                                 status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = serializers.QuizLevelSerializer(instance,
+                                                     data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return response.Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return response.Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TagViewSet(viewsets.ModelViewSet):
+    queryset = models.Tag.objects.all()
+    serializer_class = serializers.TagSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = serializers.TagSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return response.Response(serializer.data,
+                                 status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = serializers.TagSerializer(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return response.Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return response.Response(status=status.HTTP_204_NO_CONTENT)
