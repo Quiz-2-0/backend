@@ -24,39 +24,39 @@ class QuizViewSet(viewsets.ReadOnlyModelViewSet):
         return new_queryset
 
 
-class UserAnswerViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
-    queryset = models.UserAnswer.objects.all()
-    serializer_class = serializers.UserAnswerSerializer
-    permission_classes = [permissions.IsAuthenticated]
+# class UserAnswerViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+#     queryset = models.UserAnswer.objects.all()
+#     serializer_class = serializers.UserAnswerSerializer
+#     permission_classes = [permissions.IsAuthenticated]
 
-    def create(self, request, *args, **kwargs):
-        answer_id = request.data.get('id')
-        serializer = self.get_serializer(data={"id": answer_id})
-        serializer.is_valid(raise_exception=True)
-        data = {
-            'user': self.request.user.id,
-            'quiz': self.kwargs.get('quiz_id'),
-            'answer': answer_id
-        }
-        save_serializer = serializers.UserAnswerSaveSerializer(data=data)
-        save_serializer.is_valid(raise_exception=True)
-        self.perform_create(save_serializer)
+#     def create(self, request, *args, **kwargs):
+#         answer_id = request.data.get('id')
+#         serializer = self.get_serializer(data={"id": answer_id})
+#         serializer.is_valid(raise_exception=True)
+#         data = {
+#             'user': self.request.user.id,
+#             'quiz': self.kwargs.get('quiz_id'),
+#             'answer': answer_id
+#         }
+#         save_serializer = serializers.UserAnswerSaveSerializer(data=data)
+#         save_serializer.is_valid(raise_exception=True)
+#         self.perform_create(save_serializer)
 
-        return response.Response(status=status.HTTP_201_CREATED)
+#         return response.Response(status=status.HTTP_201_CREATED)
 
 
-class StatisticViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
-    serializer_class = serializers.StatisticSerializer
-    permission_classes = [permissions.IsAuthenticated]
+# class StatisticViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+#     serializer_class = serializers.StatisticSerializer
+#     permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        user = self.request.user
-        quiz_id = self.kwargs.get('quiz_id')
-        new_queryset = models.UserAnswer.objects.filter(
-            user=user,
-            quiz__id=quiz_id
-        ).order_by('answer__question__id')
-        return new_queryset
+#     def get_queryset(self):
+#         user = self.request.user
+#         quiz_id = self.kwargs.get('quiz_id')
+#         new_queryset = models.UserAnswer.objects.filter(
+#             user=user,
+#             quiz__id=quiz_id
+#         ).order_by('answer__question__id')
+#         return new_queryset
 
 
 class QuizLevelViewSet(viewsets.ModelViewSet):

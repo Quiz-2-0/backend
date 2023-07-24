@@ -3,11 +3,13 @@ from quizes.models import (
     Answer,
     Question,
     Quiz,
-    UserAnswer,
+    # UserAnswer,
     Tag,
     Volume,
-    AssignedQuiz,
+    # AssignedQuiz,
     QuizLevel,
+    # UserQuestion,
+    Statistic
 )
 
 
@@ -49,11 +51,9 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     def get_is_answered(self, obj):
         user = self.context['request'].user
-        return UserAnswer.objects.filter(
-            user=user,
-            quiz=obj.quiz,
-            answer__question=obj
-        ).exists()
+        stat = Statistic.objects.filter(user=user, quiz=obj.quiz)
+        user_question = stat.user_questions.filter(question=obj).first()
+        return user_question.is_answered
 
     class Meta:
         model = Question
@@ -77,13 +77,11 @@ class QuizSerializer(serializers.ModelSerializer):
 
     def get_isPassed(self, obj):
         user = self.context['request'].user
-        questions = obj.question_amount
-        answers = UserAnswer.objects.filter(
+        stat = Statistic.objects.get_or_create(
             user=user,
             quiz=obj,
         )
-        return (questions == answers.count() and
-                answers.filter(answer__is_right=True).count() > 0)
+        return stat.is_passed
 
     class Meta:
         model = Quiz
@@ -104,76 +102,75 @@ class QuizSerializer(serializers.ModelSerializer):
         ]
 
 
-class StatisticSerializer(serializers.ModelSerializer):
-    question = serializers.CharField(source='answer.question.text')
-    user_answer = serializers.CharField(source='answer.text')
-    right_answer = serializers.CharField(source='answer.question.right_answer')
-    isRight = serializers.BooleanField(source='answer.is_right')
-    explanation = serializers.CharField(source='answer.question.explanation')
+# class StatisticSerializer(serializers.ModelSerializer):
+#     question = serializers.CharField(source='answer.question.text')
+#     user_answer = serializers.CharField(source='answer.text')
+#     right_answer = serializers.CharField(source='answer.question.right_answer')
+#     isRight = serializers.BooleanField(source='answer.is_right')
+#     explanation = serializers.CharField(source='answer.question.explanation')
 
-    class Meta:
-        model = UserAnswer
-        fields = [
-            "question",
-            "right_answer",
-            "user_answer",
-            "isRight",
-            "explanation",
-        ]
-
-
-class UserAnswerSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(source='answer.id')
-
-    class Meta:
-        model = UserAnswer
-        fields = [
-            "id",
-        ]
+#     class Meta:
+#         model = UserAnswer
+#         fields = [
+#             "question",
+#             "right_answer",
+#             "user_answer",
+#             "isRight",
+#             "explanation",
+#         ]
 
 
-class UserAnswerSaveSerializer(serializers.ModelSerializer):
+# class UserAnswerSerializer(serializers.ModelSerializer):
+#     id = serializers.IntegerField(source='answer.id')
 
-    def create(self, validated_data):
-        answer = validated_data.pop("answer")
-        user_answer = UserAnswer.objects.filter(
-            **validated_data,
-            answer__question=answer.question
-        ).first()
-        if not user_answer:
-            user_answer = UserAnswer.objects.create(
-                **validated_data,
-                answer=answer
-            )
-        user_answer.answer = answer
-        user_answer.save()
-        answers = UserAnswer.objects.filter(**validated_data)
-        quiz = validated_data.get("quiz")
-        if (quiz.question_amount == answers.count() and
-                answers.filter(answer__is_right=True).count() > 0):
-            assigned = AssignedQuiz.objects.filter(**validated_data).first()
-            if assigned:
-                assigned.delete()
-        return user_answer
+#     class Meta:
+#         model = UserAnswer
+#         fields = [
+#             "id",
+#         ]
 
-    def validate(self, attrs):
-        quiz = attrs['quiz']
-        answer = attrs['answer']
+# class UserAnswerSaveSerializer(serializers.ModelSerializer):
 
-        if answer.question.quiz != quiz:
-            raise serializers.ValidationError({
-                'error': 'Ответ не принадлежит данному квизу.'}
-            )
+#     def create(self, validated_data):
+#         answer = validated_data.pop("answer")
+#         user_answer = UserAnswer.objects.filter(
+#             **validated_data,
+#             answer__question=answer.question
+#         ).first()
+#         if not user_answer:
+#             user_answer = UserAnswer.objects.create(
+#                 **validated_data,
+#                 answer=answer
+#             )
+#         user_answer.answer = answer
+#         user_answer.save()
+#         answers = UserAnswer.objects.filter(**validated_data)
+#         quiz = validated_data.get("quiz")
+#         if (quiz.question_amount == answers.count() and
+#                 answers.filter(answer__is_right=True).count() > 0):
+#             assigned = AssignedQuiz.objects.filter(**validated_data).first()
+#             if assigned:
+#                 assigned.delete()
+#         return user_answer
 
-        return attrs
+#     def validate(self, attrs):
+#         quiz = attrs['quiz']
+#         answer = attrs['answer']
 
-    class Meta:
-        model = UserAnswer
-        fields = [
-            "user",
-            "quiz",
-            "answer",
-        ]
+#         if answer.question.quiz != quiz:
+#             raise serializers.ValidationError({
+#                 'error': 'Ответ не принадлежит данному квизу.'}
+#             )
+
+#         return attrs
+
+#     class Meta:
+#         model = UserAnswer
+#         fields = [
+#             "user",
+#             "quiz",
+#             "answer",
+#         ]
 
 
 class QuizLevelSerializer(serializers.ModelSerializer):
