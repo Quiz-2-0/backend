@@ -130,7 +130,6 @@ class QuizLevelSerializer(serializers.ModelSerializer):
 
 
 class UserAnswerListSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(source='answer_list.id')
 
     class Meta:
         model = UserAnswerList
@@ -219,17 +218,4 @@ class UserQuestionSaveSerializer(serializers.ModelSerializer):
             'statistic',
             'question',
             'response_time',
-        ]
-
-
-class UserAnswerSaveSerializer(serializers.ModelSerializer):
-    def create(self, validated_data):
-        print(validated_data)
-        return validated_data
-
-    class Meta:
-        model = UserAnswer
-        fields = [
-            'answer',
-            'answer_text',
         ]
