@@ -262,52 +262,9 @@ class Statistic(models.Model):
         verbose_name='Квиз'
     )
 
-    def create_answer(self, question, answer, time):
-        user_question, _ = UserQuestion.objects.get_or_create(
-            statistic=self, question=question
-        )
-        user_question.response_time = time
-        if question.question_type == 'ONE':
-            update_values = {'answer': answer}
-            UserAnswer.objects.update_or_create(
-                user_question=user_question,
-                defaults=update_values
-            )
-        elif question.question_type == 'MNY':
-            answers = []
-            for ans in answer:
-                answers.append(
-                    UserAnswer(
-                        user_question=user_question,
-                        answer=ans
-                    )
-                )
-            UserAnswer.objects.filter(user_question=user_question).delete()
-            UserAnswer.objects.bulk_create(answers)
-        elif question.question_type == 'OPN':
-            update_values = {'answer_text': answer}
-            UserAnswer.objects.update_or_create(
-                user_question=user_question,
-                defaults=update_values
-            )
-        elif question.question_type == 'LST':
-            for key, value in answer.items():
-                user_answer, _ = UserAnswer.objects.get_or_create(
-                    user_question=user_question,
-                    answer=key
-                )
-                answers_list = []
-                for ans in value:
-                    answers_list.append(
-                        UserAnswerList(
-                            user_answer=user_answer,
-                            answer=ans
-                        )
-                    )
-                UserAnswerList.objects.filter(
-                    user_answer=user_answer
-                ).delete()
-                UserAnswerList.objects.bulk_create(answers_list)
+    @property
+    def count_questions(self):
+        return self.quiz.question_amount
 
     @property
     def count_answered(self):
@@ -351,30 +308,38 @@ class UserQuestion(models.Model):
         verbose_name='Время ответа'
     )
 
+    is_right = models.BooleanField(default=False)
+
     @property
     def is_answered(self):
         return self.user_answers.exists()
 
     @property
-    def is_right(self):
+    def set_is_right(self):
+        def _set_is_right(question_type):
+            if question_type == 'ONE':
+                return self.user_answers.first().answer.is_right
+            if question_type == 'MNY':
+                return (
+                    self.user_answers.filter(answer__is_right=True).count() ==
+                    self.question.right_answers
+                )
+            if question_type == 'OPN':
+                return (self.user_answers.first().answer_text ==
+                        self.question.answers.first().text)
+            if question_type == 'LST':
+                answers = UserAnswerList.objects.filter(
+                    user_answer__user_question=self
+                )
+                for answer in answers:
+                    if answer.answer_list.answer != answer.user_answer.answer:
+                        return False
+                    return True
+            return False
         question_type = self.question.question_type
-        if question_type == 'ONE':
-            return self.user_answers.first().answer.is_right
-        if question_type == 'MNY':
-            return (self.user_answers.filter(answer__is_right=True).count() ==
-                    self.question.right_answers)
-        if question_type == 'OPN':
-            return (self.user_answers.first().answer_text ==
-                    self.question.answers.first().text)
-        if question_type == 'LST':
-            answers = UserAnswerList.objects.filter(
-                user_answer__user_question=self
-            )
-            for answer in answers:
-                if answer.answer_list.answer != answer.user_answer.answer:
-                    return False
-                return True
-        return False
+        self.is_right = _set_is_right(question_type)
+        self.save()
+        return self.is_right
 
     class Meta:
         verbose_name = 'Вопрос пользователя'
@@ -408,6 +373,9 @@ class UserAnswer(models.Model):
         verbose_name = 'Ответ пользователя'
         verbose_name_plural = 'Ответы пользователя'
 
+    def __str__(self):
+        return f'{self.user_question} {self.answer}'
+
 
 class UserAnswerList(models.Model):
     user_answer = models.ForeignKey(
@@ -426,3 +394,6 @@ class UserAnswerList(models.Model):
     class Meta:
         verbose_name = 'Ответ пользователя из списка'
         verbose_name_plural = 'Ответы пользователя из списка'
+
+    def __str__(self):
+        return f'{self.user_answer} {self.answer_list}'

@@ -24,39 +24,29 @@ class QuizViewSet(viewsets.ReadOnlyModelViewSet):
         return new_queryset
 
 
-# class UserAnswerViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
-#     queryset = models.UserAnswer.objects.all()
-#     serializer_class = serializers.UserAnswerSerializer
-#     permission_classes = [permissions.IsAuthenticated]
+class UserQuestionViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    queryset = models.UserQuestion.objects.all()
+    serializer_class = serializers.UserQuestionSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-#     def create(self, request, *args, **kwargs):
-#         answer_id = request.data.get('id')
-#         serializer = self.get_serializer(data={"id": answer_id})
-#         serializer.is_valid(raise_exception=True)
-#         data = {
-#             'user': self.request.user.id,
-#             'quiz': self.kwargs.get('quiz_id'),
-#             'answer': answer_id
-#         }
-#         save_serializer = serializers.UserAnswerSaveSerializer(data=data)
-#         save_serializer.is_valid(raise_exception=True)
-#         self.perform_create(save_serializer)
+    def create(self, request, *args, **kwargs):
+        statistic = models.Statistic.objects.get_or_create(
+            user=self.request.user.id,
+            quiz=self.kwargs.get('quiz_id'),
+        )[0]
 
-#         return response.Response(status=status.HTTP_201_CREATED)
+        data = request.data
+        data['statistic'] = statistic.id
+        data['question'] = data.get('id')
 
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
 
-# class StatisticViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
-#     serializer_class = serializers.StatisticSerializer
-#     permission_classes = [permissions.IsAuthenticated]
+        save_serializer = serializers.UserQuestionSaveSerializer(data=data)
+        save_serializer.is_valid(raise_exception=True)
+        save_serializer.save()
 
-#     def get_queryset(self):
-#         user = self.request.user
-#         quiz_id = self.kwargs.get('quiz_id')
-#         new_queryset = models.UserAnswer.objects.filter(
-#             user=user,
-#             quiz__id=quiz_id
-#         ).order_by('answer__question__id')
-#         return new_queryset
+        return response.Response(status=status.HTTP_201_CREATED)
 
 
 class QuizLevelViewSet(viewsets.ModelViewSet):

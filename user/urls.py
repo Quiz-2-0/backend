@@ -13,7 +13,7 @@ from user.views import (
 
 router_v1 = DefaultRouter()
 router_v1.register('create', UserViewSet)
-router_v1.register('departments', DepartmentViewSet)
+router_v1.register('admin/departments', DepartmentViewSet)
 
 urlpatterns = [
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

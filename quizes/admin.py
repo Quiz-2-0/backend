@@ -7,7 +7,11 @@ from .models import (
     Tag,
     QuizLevel,
     Volume,
-    # UserAnswer,
+    Statistic,
+    UserQuestion,
+    UserAnswer,
+    UserAnswerList,
+    AnswerList
 )
 
 
@@ -46,6 +50,26 @@ class VolumeAdmin(admin.ModelAdmin):
     list_display = ('name', 'quiz')
 
 
-# @admin.register(UserAnswer)
-# class UserAnswerAdmin(admin.ModelAdmin):
-#     list_display = ('quiz', 'user', 'answer')
+@admin.register(Statistic)
+class StatisticAdmin(admin.ModelAdmin):
+    list_display = ('quiz', 'user')
+
+
+@admin.register(UserQuestion)
+class UserQuestionAdmin(admin.ModelAdmin):
+    list_display = ('statistic', 'question')
+
+
+@admin.register(UserAnswer)
+class UserAnswerAdmin(admin.ModelAdmin):
+    list_display = ('user_question', 'answer', 'answer_text')
+
+
+@admin.register(UserAnswerList)
+class UserAnswerListAdmin(admin.ModelAdmin):
+    list_display = ('user_answer', 'answer_list')
+
+
+@admin.register(AnswerList)
+class AnswerListAdmin(admin.ModelAdmin):
+    list_display = ('answer', 'text')
