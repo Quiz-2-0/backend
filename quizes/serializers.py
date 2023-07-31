@@ -20,12 +20,16 @@ class VolumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Volume
         fields = [
+            'id',
             'name',
             'description',
         ]
 
 
 class TagSerializer(serializers.ModelSerializer):
+    # делаем name необязательным полем, чтобы при добавлении тега при создании
+    # квиза не получать ошибку об отсутствии обязательного параметра name
+    name = serializers.CharField(required=False)
 
     class Meta:
         model = Tag
@@ -300,22 +304,29 @@ class QuizAdminSerializer(serializers.ModelSerializer):
     """
     Сериализатор для работы с квизами на стороне администратора.
     """
-    tags = TagSerializer(many=True)
+    tags = TagSerializer(many=True, required=False)
+    questions = QuestionAdminSerializer(many=True, required=False)
+    volumes = VolumeSerializer(many=True, required=False)
 
     class Meta:
         model = Quiz
         fields = ['id', 'image', 'description', 'directory', 'name',
-                  'duration', 'level', 'tags', 'threshold']
+                  'duration', 'level', 'question_amount', 'threshold', 'tags',
+                  'questions', 'volumes',
+                  ]
 
     def create(self, validated_data):
         tags_data = validated_data.pop('tags', [])
         quiz = Quiz.objects.create(**validated_data)
 
         for tag_data in tags_data:
-            tag, _ = Tag.objects.get_or_create(
-                name=tag_data['name'], color=tag_data['color']
-            )
-            quiz.tags.add(tag)
+            tag_id = tag_data.get('id', None)
+            if tag_id is not None:
+                try:
+                    tag = Tag.objects.get(id=tag_id)
+                    quiz.tags.add(tag)
+                except Tag.DoesNotExist:
+                    pass
 
         return quiz
 
