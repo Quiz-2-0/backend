@@ -1,4 +1,7 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import permissions, viewsets, response, status, mixins
+from rest_framework.response import Response
+
 from quizes import models, serializers
 from django.db.models import Exists, OuterRef
 
@@ -98,3 +101,51 @@ class TagViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return response.Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class QuestionAdminViewSet(viewsets.ModelViewSet):
+    """
+    Представление для обработки вопросов квизов на стороне администратора.
+    """
+    serializer_class = serializers.QuestionAdminSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        quiz_id = self.kwargs['quiz_id']
+        return models.Question.objects.filter(quiz_id=quiz_id)
+
+    def perform_create(self, serializer):
+        quiz_id = self.request.data.get('quiz_id')
+        quiz = get_object_or_404(models.Quiz, pk=quiz_id)
+        serializer.save(quiz=quiz)
+
+    def perform_update(self, serializer):
+        quiz_id = self.kwargs['quiz_id']
+        question_id = self.kwargs['pk']
+        quiz = get_object_or_404(models.Quiz, pk=quiz_id)
+        question = get_object_or_404(models.Question, pk=question_id,
+                                     quiz=quiz)
+        serializer.save(quiz=quiz)
+
+    def perform_destroy(self, instance):
+        instance.delete()
+
+
+class QuizAdminViewSet(viewsets.ModelViewSet):
+    """
+    Представление для работы с квизами со стороны администратора.
+    """
+    serializer_class = serializers.QuizAdminSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # для оптимизации запросов к БД, чтобы избежать N+1 проблемы,
+        # используем prefetch_related вместо all()
+        return models.Quiz.objects.prefetch_related('tags').all()
+        # return models.Quiz.objects.all()
+
+    # def perform_update(self, serializer):
+    #     serializer.save()
+
+    def perform_destroy(self, instance):
+        instance.delete()
