@@ -246,14 +246,15 @@ class QuestionAdminSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         answers_data = validated_data.pop('answers', [])
-        question = Question.objects.create(**validated_data)
+        quiz_id = self.context['quiz_id']
+        question = Question.objects.create(quiz_id=quiz_id, **validated_data)
         for answer_data in answers_data:
             answers_list_data = answer_data.pop('answers_list', [])
             # Получаем значение is_right или False, если не передано.
             # Т.к. в моделях это поле необходимо, без такой проверки не
             # получится выполнить POST-запрос. Либо так, либо в модели Answer,
             # поле is_right сделать null=True.
-            # В данный момент is_true можем передавать, а можем и не
+            # В данный момент is_right можем передавать, а можем и не
             # передавать.
             is_right = answer_data.pop('is_right', False)
             answer = Answer.objects.create(
@@ -261,6 +262,7 @@ class QuestionAdminSerializer(serializers.ModelSerializer):
             )
             for answer_list_data in answers_list_data:
                 AnswerList.objects.create(answer=answer, **answer_list_data)
+
         return question
 
     def update(self, instance, validated_data):
@@ -319,45 +321,15 @@ class QuizAdminSerializer(serializers.ModelSerializer):
         tags_data = validated_data.pop('tags', [])
         quiz = Quiz.objects.create(**validated_data)
 
-        for tag_data in tags_data:
-            tag_id = tag_data.get('id', None)
-            if tag_id is not None:
-                try:
-                    tag = Tag.objects.get(id=tag_id)
-                    quiz.tags.add(tag)
-                except Tag.DoesNotExist:
-                    pass
+        # В этом месте мы не добавляем теги, только сохраняем квиз
 
         return quiz
 
     def update(self, instance, validated_data):
         tags_data = validated_data.pop('tags', [])
-        instance.image = validated_data.get('image', instance.image)
-        instance.description = validated_data.get('description',
-                                                  instance.description)
-        instance.directory = validated_data.get('directory',
-                                                instance.directory)
-        instance.name = validated_data.get('name', instance.name)
-        instance.duration = validated_data.get('duration', instance.duration)
-        instance.level = validated_data.get('level', instance.level)
-        instance.threshold = validated_data.get('threshold',
-                                                instance.threshold)
-        instance.save()
+        instance = super().update(instance, validated_data)
 
-        # Обновляем данные тегов
-        for tag_data in tags_data:
-            tag_id = tag_data.get('id', None)
-            if tag_id is None:
-                continue  # Пропускаем создание новых тегов при обновлении
-            else:
-                # Если id тега передан, значит это существующий тег,
-                # обновляем его
-                try:
-                    tag = Tag.objects.get(id=tag_id, quiz=instance)
-                except Tag.DoesNotExist:
-                    continue
-                tag.name = tag_data.get('name', tag.name)
-                tag.color = tag_data.get('color', tag.color)
-                tag.save()
+        tag_ids = [tag_data.get('id') for tag_data in tags_data]
+        instance.tags.set(tag_ids)  # Обновляем теги
 
         return instance

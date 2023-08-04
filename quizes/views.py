@@ -109,15 +109,31 @@ class QuestionAdminViewSet(viewsets.ModelViewSet):
     """
     serializer_class = serializers.QuestionAdminSerializer
     permission_classes = [permissions.IsAuthenticated]
+    # Пустой QuerySet для схемы Swagger.
+    queryset = models.Question.objects.none()
 
     def get_queryset(self):
+        # queryset только для целей схемы Swagger.
+        if getattr(self, 'swagger_fake_view', False):
+            return self.queryset
         quiz_id = self.kwargs['quiz_id']
         return models.Question.objects.filter(quiz_id=quiz_id)
 
-    def perform_create(self, serializer):
-        quiz_id = self.request.data.get('quiz_id')
-        quiz = get_object_or_404(models.Quiz, pk=quiz_id)
-        serializer.save(quiz=quiz)
+    def create(self, request, *args, **kwargs):
+        quiz_id = self.kwargs['quiz_id']
+        serializer = serializers.QuestionAdminSerializer(
+            data=request.data, context={'quiz_id': quiz_id}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        # Получите список всех вопросов квиза и их ответов
+        all_questions = models.Question.objects.filter(quiz_id=quiz_id)
+        serialized_questions = serializers.QuestionAdminSerializer(
+            all_questions, many=True, context={'quiz_id': quiz_id}
+        ).data
+
+        return Response(serialized_questions, status=status.HTTP_201_CREATED)
 
     def perform_update(self, serializer):
         quiz_id = self.kwargs['quiz_id']
@@ -141,11 +157,20 @@ class QuizAdminViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         # для оптимизации запросов к БД, чтобы избежать N+1 проблемы,
         # используем prefetch_related вместо all()
-        return models.Quiz.objects.prefetch_related('tags').all()
         # return models.Quiz.objects.all()
+        return models.Quiz.objects.prefetch_related('tags').all()
 
-    # def perform_update(self, serializer):
-    #     serializer.save()
+    def perform_create(self, serializer):
+        quiz = serializer.save()
+        tags_data = self.request.data.get('tags', [])
+        tag_ids = [tag_data.get('id') for tag_data in tags_data]
+        quiz.tags.set(tag_ids)
+
+    def perform_update(self, serializer):
+        quiz = serializer.save()
+        tags_data = self.request.data.get('tags', [])
+        tag_ids = [tag_data.get('id') for tag_data in tags_data]
+        quiz.tags.set(tag_ids)
 
     def perform_destroy(self, instance):
         instance.delete()
