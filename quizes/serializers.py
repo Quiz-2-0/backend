@@ -158,7 +158,7 @@ class UserAnswerSerializer(serializers.ModelSerializer):
         fields = [
             'answer',
             'answer_text',
-            'answer_list'
+            'answer_list',
         ]
 
 
