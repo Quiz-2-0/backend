@@ -1,6 +1,7 @@
 from rest_framework import permissions, viewsets, response, status, mixins
 from quizes import models, serializers
 from django.db.models import Exists, OuterRef
+from rest_framework.decorators import action
 
 
 class QuizViewSet(viewsets.ReadOnlyModelViewSet):
@@ -98,3 +99,20 @@ class TagViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         instance.delete()
         return response.Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AssignedQuizViewSet(viewsets.ModelViewSet):
+    queryset = models.AssignedQuiz.objects.all()
+    serializer_class = serializers.AssignedSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    @action(detail=False, methods=['post'])
+    def create_list(self, request):
+        users = request.data.get('users')
+        quizes = request.data.get('quizes')
+        for user in users:
+            for quiz in quizes:
+                _, _ = models.AssignedQuiz.objects.get_or_create(
+                    user=user, quiz=quiz
+                )
+        return response.Response(status=status.HTTP_201_CREATED)

@@ -7,13 +7,18 @@ from user.views import (
     DepartmentViewSet,
     UserViewSet,
     UserResetPasswordViewSet,
-    UserGetViewSet
+    UserGetViewSet,
+    UserAdminViewSet
 )
+from ratings.views import UserAchivmentViewSet, RatingViewSet
 
 
 router_v1 = DefaultRouter()
 router_v1.register('create', UserViewSet)
+router_v1.register('', UserAdminViewSet)
 router_v1.register('admin/departments', DepartmentViewSet)
+router_v1.register('achivments', UserAchivmentViewSet, basename='achivments')
+router_v1.register('ratings', RatingViewSet, basename='ratings')
 
 urlpatterns = [
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

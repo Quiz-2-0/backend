@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'user.apps.UserConfig',
     'api.apps.ApiConfig',
     'quizes.apps.QuizesConfig',
+    'ratings.apps.RatingsConfig',
 ]
 
 MIDDLEWARE = [

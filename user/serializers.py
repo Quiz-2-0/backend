@@ -11,6 +11,8 @@ from django.utils.translation import gettext_lazy as _
 
 from user.models import User, Department
 from user.utils import password_mail
+from quizes.models import AssignedQuiz
+from ratings.models import Rating
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -45,7 +47,6 @@ class Base64ImageField(serializers.ImageField):
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
-    avatar = Base64ImageField()
     department = serializers.SlugRelatedField(
         slug_field='name',
         queryset=Department.objects.all()
@@ -53,8 +54,14 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = User.REQUIRED_FIELDS + (
-            'patronymic', 'department', 'email', 'avatar', 'score'
+        fields = (
+            'patronymic',
+            'department',
+            'email',
+            'firstName',
+            'lastName',
+            'position',
+            'role',
         )
 
     def create(self, validated_data):
@@ -62,8 +69,74 @@ class UserCreateSerializer(serializers.ModelSerializer):
         user = User.objects.create(**validated_data)
         user.set_password(password)
         user.save()
+        _, _ = Rating.objects.get_or_create(user=user)
         password_mail(validated_data['email'], password)
         return user
+
+
+class UserAdminSerializer(serializers.ModelSerializer):
+    department = serializers.SlugRelatedField(
+        slug_field='name',
+        queryset=Department.objects.all()
+    )
+    assigned = serializers.SerializerMethodField()
+    count_passed = serializers.IntegerField(source='rating.count_passed')
+    rating = serializers.IntegerField(source='rating.user_rating')
+
+    # TODO annotate
+    def get_assigned(self, obj):
+        return AssignedQuiz.objects.filter(user=obj).count()
+
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'firstName',
+            'lastName',
+            'patronymic',
+            'email',
+            'department',
+            'position',
+            'assigned',
+            'count_passed',
+            'rating',
+        ]
+
+
+class UserSerializer(serializers.ModelSerializer):
+    departament = serializers.CharField(source='department.name')
+    pass_progress = serializers.IntegerField(source='rating.pass_progress')
+    count_assigned = serializers.IntegerField(source='rating.count_assigned')
+    count_passed = serializers.IntegerField(source='rating.count_passed')
+    right_precent = serializers.IntegerField(source='rating.right_precent')
+    level = serializers.IntegerField(source='rating.user_level.level')
+    level_image = serializers.CharField(source='rating.user_level.image')
+    level_description = serializers.CharField(
+        source='rating.user_level.description'
+    )
+    to_next_level = serializers.IntegerField(source='rating.to_next_level')
+
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'firstName',
+            'lastName',
+            'patronymic',
+            'avatar',
+            'email',
+            'role',
+            'departament',
+            'position',
+            'pass_progress',
+            'count_assigned',
+            'count_passed',
+            'right_precent',
+            'level',
+            'level_image',
+            'level_description',
+            'to_next_level',
+        ]
 
 
 class UserResetPasswordSerializer(serializers.ModelSerializer):

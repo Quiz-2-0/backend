@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from user.models import Department
+from ratings.models import Rating
 from django.core.validators import MaxValueValidator, MinValueValidator
 
 User = get_user_model()
@@ -262,30 +263,92 @@ class Statistic(models.Model):
         verbose_name='Квиз'
     )
 
-    @property
-    def count_questions(self):
-        return self.quiz.question_amount
+    count_questions = models.PositiveSmallIntegerField(
+        verbose_name='Вопросов в квизе',
+        blank=True,
+        null=True
+    )
+
+    count_answered = models.PositiveSmallIntegerField(
+        verbose_name='Вопросов отвечено',
+        blank=True,
+        null=True
+    )
+
+    count_right = models.PositiveSmallIntegerField(
+        verbose_name='Правильно вопросов отвечено',
+        blank=True,
+        null=True
+    )
+
+    count_wrong = models.PositiveSmallIntegerField(
+        verbose_name='Неверно вопросов отвечено',
+        blank=True,
+        null=True
+    )
+
+    quiz_time = models.PositiveIntegerField(
+        verbose_name='Время прохождения квиза',
+        blank=True,
+        null=True
+    )
+
+    is_completed = models.BooleanField(
+        verbose_name='Квиз завершен',
+        default=False
+    )
+
+    is_passed = models.BooleanField(
+        verbose_name='Квиз пройден',
+        default=False
+    )
+
+    is_failed = models.BooleanField(
+        verbose_name='Квиз провален',
+        default=False
+    )
+
+    is_assigned = models.BooleanField(
+        verbose_name='Квиз назначен',
+        default=False
+    )
+
+    mod_date = models.DateField(
+        verbose_name='Дата изменения',
+        auto_now=True
+    )
 
     @property
-    def count_answered(self):
-        return self.user_questions.count()
+    def set_statistic(self):
+        self.count_questions = self.quiz.question_amount
+        to_passed = self.quiz.to_passed
+        self.count_answered = self.user_questions.count()
+        self.count_right = self.user_questions.filter(is_right=True).count()
+        self.count_wrong = self.count_answered - self.count_right
+        self.is_completed = self.count_answered == self.count_questions
+        self.is_passed = (
+            self.count_right >= to_passed and
+            self.is_completed
+        )
+        self.is_failed = (
+            self.count_right < to_passed and
+            self.is_completed
+        )
+        self.is_assigned = AssignedQuiz.objects.filter(
+            user=self.user, quiz=self.quiz
+        ).exists()
+        quiz_time = self.user_questions.aggregate(
+            quiz_time=models.Sum('response_time')
+        )
+        self.quiz_time = quiz_time['quiz_time']
+        self.save()
+        if self.is_completed:
+            rating, _ = Rating.objects.get_or_create(user=self.user)
+            rating.set_ratings()
 
-    @property
-    def count_right(self):
-        return self.user_questions.filter(is_right=True).count()
-
-    @property
-    def count_wrong(self):
-        return self.user_questions.filter(is_right=False).count()
-
-    @property
-    def is_passed(self):
-        return (self.count_right >= self.quiz.to_passed and
-                self.count_answered == self.quiz.question_amount)
-
-    @property
-    def quiz_time(self):
-        return models.Sum(self.user_questions.response_time)
+    class Meta:
+        verbose_name = 'Статистика прохождения квиза'
+        verbose_name_plural = 'Статистика прохождения квизов'
 
     def __str__(self):
         return f'{self.user} {self.quiz}'
@@ -308,11 +371,10 @@ class UserQuestion(models.Model):
         verbose_name='Время ответа'
     )
 
-    is_right = models.BooleanField(default=False)
-
-    @property
-    def is_answered(self):
-        return self.user_answers.exists()
+    is_right = models.BooleanField(
+        verbose_name='Отвечен верно',
+        default=False
+    )
 
     @property
     def set_is_right(self):
@@ -328,18 +390,16 @@ class UserQuestion(models.Model):
                 return (self.user_answers.first().answer_text ==
                         self.question.answers.first().text)
             if question_type == 'LST':
-                answers = UserAnswerList.objects.filter(
-                    user_answer__user_question=self
-                )
+                answers = self.user_answers.objects.all()
                 for answer in answers:
                     if answer.answer_list.answer != answer.user_answer.answer:
                         return False
-                    return True
+                return True
             return False
         question_type = self.question.question_type
         self.is_right = _set_is_right(question_type)
         self.save()
-        return self.is_right
+        self.statistic.set_statistic
 
     class Meta:
         verbose_name = 'Вопрос пользователя'

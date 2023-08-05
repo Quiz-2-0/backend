@@ -11,7 +11,8 @@ from quizes.models import (
     UserAnswer,
     UserQuestion,
     Statistic,
-    AnswerList
+    AnswerList,
+    AssignedQuiz
 )
 
 
@@ -67,11 +68,10 @@ class QuestionSerializer(serializers.ModelSerializer):
     def get_is_answered(self, obj):
         user = self.context['request'].user
         stat = Statistic.objects.get_or_create(user=user, quiz=obj.quiz)
-        print(stat[0])
         user_question = UserQuestion.objects.filter(
             statistic=stat[0].id, question=obj
         ).first()
-        return user_question.is_answered if user_question else False
+        return True if user_question else False
 
     class Meta:
         model = Question
@@ -97,10 +97,10 @@ class QuizSerializer(serializers.ModelSerializer):
     # TODO annotate
     def get_isPassed(self, obj):
         user = self.context['request'].user
-        stat = Statistic.objects.get_or_create(
+        stat, _ = Statistic.objects.get_or_create(
             user=user,
             quiz=obj,
-        )[0]
+        )
         return stat.is_passed
 
     class Meta:
@@ -139,7 +139,7 @@ class UserAnswerListSerializer(serializers.ModelSerializer):
 
 
 class UserAnswerSerializer(serializers.ModelSerializer):
-    answer_list = UserAnswerListSerializer(many=True, read_only=True)
+    answer_list = UserAnswerListSerializer(many=True)
 
     class Meta:
         model = UserAnswer
@@ -151,7 +151,7 @@ class UserAnswerSerializer(serializers.ModelSerializer):
 
 
 class UserQuestionSerializer(serializers.ModelSerializer):
-    answers = UserAnswerSerializer(many=True, read_only=True)
+    answers = UserAnswerSerializer(many=True)
     id = serializers.IntegerField(source='question.id')
     question_type = serializers.CharField(source='question.question_type')
 
@@ -218,4 +218,14 @@ class UserQuestionSaveSerializer(serializers.ModelSerializer):
             'statistic',
             'question',
             'response_time',
+        ]
+
+
+class AssignedSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = AssignedQuiz
+        fields = [
+            'user',
+            'quiz',
         ]

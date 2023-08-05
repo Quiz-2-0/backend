@@ -8,7 +8,9 @@ from user.models import User, Department
 from user.serializers import (
     UserCreateSerializer,
     UserResetPasswordSerializer,
-    DepartmentSerializer
+    DepartmentSerializer,
+    UserSerializer,
+    UserAdminSerializer
 )
 from user.utils import password_mail
 from user.permission import AdminOrReadOnly
@@ -35,13 +37,13 @@ class UserResetPasswordViewSet(generics.CreateAPIView):
 
 
 class UserGetViewSet(generics.RetrieveAPIView):
-    serializer_class = UserCreateSerializer
+    serializer_class = UserSerializer
     queryset = User.objects.all()
 
     def get(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
-        serializer = UserCreateSerializer(request.user)
+        serializer = UserSerializer(request.user)
         return Response(status=status.HTTP_200_OK, data=serializer.data)
 
 
@@ -49,3 +51,15 @@ class DepartmentViewSet(viewsets.ModelViewSet):
     serializer_class = DepartmentSerializer
     queryset = Department.objects.all()
     permission_classes = (AdminOrReadOnly,)
+
+
+class UserAdminViewSet(
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet
+):
+    serializer_class = UserAdminSerializer
+    queryset = User.objects.all()
+
