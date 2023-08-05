@@ -174,3 +174,26 @@ class QuizAdminViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         instance.delete()
+
+
+class QuizVolumeViewSet(viewsets.ModelViewSet):
+    """
+    Представление для работы с учебными материалами определённого квиза
+    со стороны администратора.
+    """
+    serializer_class = serializers.VolumeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    # Пустой QuerySet для схемы Swagger.
+    queryset = models.Volume.objects.none()
+
+    def get_queryset(self):
+        # queryset только для целей схемы Swagger.
+        if getattr(self, 'swagger_fake_view', False):
+            return self.queryset
+        quiz_id = self.kwargs['quiz_id']
+        return models.Volume.objects.filter(quiz__id=quiz_id)
+
+    def perform_create(self, serializer):
+        quiz_id = self.kwargs['quiz_id']
+        quiz = models.Quiz.objects.get(id=quiz_id)
+        serializer.save(quiz=quiz)

@@ -4,6 +4,7 @@ from quizes.views import (
     QuestionAdminViewSet,
     QuizAdminViewSet,
     QuizLevelViewSet,
+    QuizVolumeViewSet,
     TagViewSet,
 )
 from user.views import DepartmentViewSet
@@ -14,6 +15,10 @@ router_v1.register('tags', TagViewSet, basename='quiz-tags')
 router_v1.register(
     r'quizes/(?P<quiz_id>[\d]+)/questions', QuestionAdminViewSet,
     basename='quiz-questions-list'
+)
+router_v1.register(
+    r'quizes/(?P<quiz_id>[\d]+)/volumes', QuizVolumeViewSet,
+    basename='quiz-volumes-list'
 )
 router_v1.register(
     'quizes/questions', QuestionAdminViewSet, basename='quiz-questions'
