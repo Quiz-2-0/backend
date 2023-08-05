@@ -146,7 +146,7 @@ class UserAnswerListSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserAnswerList
         fields = [
-            'answers_list',
+            'answer_list',
         ]
 
 
@@ -158,7 +158,7 @@ class UserAnswerSerializer(serializers.ModelSerializer):
         fields = [
             'answer',
             'answer_text',
-            'answer_list',
+            'answer_list'
         ]
 
 
@@ -203,8 +203,8 @@ class UserQuestionSaveSerializer(serializers.ModelSerializer):
             user_question.delete()
         user_question = UserQuestion.objects.create(**validated_data)
         for ans in answers:
-            answers_list = ans.pop('answers_list')
-            answer = get_object_or_404(Answer, id=ans.pop('answers'))
+            answers_list = ans.pop('answer_list')
+            answer = get_object_or_404(Answer, id=ans.pop('answer'))
             user_answer = UserAnswer.objects.create(
                 user_question=user_question,
                 answer=answer,
@@ -213,7 +213,7 @@ class UserQuestionSaveSerializer(serializers.ModelSerializer):
             for ans_list in answers_list:
                 answer_list = get_object_or_404(
                     AnswerList,
-                    id=ans_list.pop('answers_list')
+                    id=ans_list.pop('answer_list')
                 )
                 UserAnswerList.objects.create(
                     user_answer=user_answer,
