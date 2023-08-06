@@ -4,19 +4,13 @@ from rest_framework.routers import DefaultRouter
 from django.urls import path, include
 
 from user.views import (
-    DepartmentViewSet,
-    UserViewSet,
     UserResetPasswordViewSet,
     UserGetViewSet,
-    UserAdminViewSet
 )
 from ratings.views import UserAchivmentViewSet, RatingViewSet
 
 
 router_v1 = DefaultRouter()
-router_v1.register('create', UserViewSet)
-router_v1.register('', UserAdminViewSet)
-router_v1.register('admin/departments', DepartmentViewSet)
 router_v1.register('achivments', UserAchivmentViewSet, basename='achivments')
 router_v1.register('ratings', RatingViewSet, basename='ratings')
 

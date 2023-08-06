@@ -29,17 +29,12 @@ class UserAchivmentViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 
 
 class RatingViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
-    serializer_class = RatingSerializer,
+    serializer_class = RatingSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         departament = self.request.user.department.id
         return Rating.objects.filter(user__department=departament)
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = RatingSerializer(queryset, many=True)
-        return response.Response(serializer.data)
 
     @action(detail=False, methods=['get'])
     def short(self, request):

@@ -43,6 +43,7 @@ class RatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rating
         fields = [
+            'id',
             'firstName',
             'lastName',
             'avatar',
@@ -60,6 +61,7 @@ class RatingShortSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rating
         fields = [
+            'id',
             'firstName',
             'lastName',
             'avatar',

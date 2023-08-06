@@ -1,10 +1,12 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import permissions, viewsets, response, status, mixins
+from rest_framework import permissions, viewsets, response, status, mixins, generics
 from rest_framework.response import Response
 
 from quizes import models, serializers
 from django.db.models import Exists, OuterRef
-from rest_framework.decorators import action
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 class QuizViewSet(viewsets.ReadOnlyModelViewSet):
@@ -104,21 +106,24 @@ class TagViewSet(viewsets.ModelViewSet):
         return response.Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class AssignedQuizViewSet(viewsets.ModelViewSet):
+class AssignedQuizViewSet(generics.CreateAPIView):
     queryset = models.AssignedQuiz.objects.all()
     serializer_class = serializers.AssignedSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    @action(detail=False, methods=['post'])
-    def create_list(self, request):
+    def post(self, request):
         users = request.data.get('users')
         quizes = request.data.get('quizes')
         for user in users:
             for quiz in quizes:
+                q = get_object_or_404(models.Quiz, id=quiz['id'])
+                u = get_object_or_404(User, id=user['id'])
                 _, _ = models.AssignedQuiz.objects.get_or_create(
-                    user=user, quiz=quiz
+                    user=u, quiz=q
                 )
         return response.Response(status=status.HTTP_201_CREATED)
+
+
 class QuestionAdminViewSet(viewsets.ModelViewSet):
     """
     Представление для обработки вопросов квизов на стороне администратора.
