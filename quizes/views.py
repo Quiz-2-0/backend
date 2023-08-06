@@ -1,4 +1,7 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import permissions, viewsets, response, status, mixins
+from rest_framework.response import Response
+
 from quizes import models, serializers
 from django.db.models import Exists, OuterRef
 from rest_framework.decorators import action
@@ -116,3 +119,97 @@ class AssignedQuizViewSet(viewsets.ModelViewSet):
                     user=user, quiz=quiz
                 )
         return response.Response(status=status.HTTP_201_CREATED)
+class QuestionAdminViewSet(viewsets.ModelViewSet):
+    """
+    Представление для обработки вопросов квизов на стороне администратора.
+    """
+    serializer_class = serializers.QuestionAdminSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    # Пустой QuerySet для схемы Swagger.
+    queryset = models.Question.objects.none()
+
+    def get_queryset(self):
+        # queryset только для целей схемы Swagger.
+        if getattr(self, 'swagger_fake_view', False):
+            return self.queryset
+        quiz_id = self.kwargs['quiz_id']
+        return models.Question.objects.filter(quiz_id=quiz_id)
+
+    def create(self, request, *args, **kwargs):
+        quiz_id = self.kwargs['quiz_id']
+        serializer = serializers.QuestionAdminSerializer(
+            data=request.data, context={'quiz_id': quiz_id}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        # Получите список всех вопросов квиза и их ответов
+        all_questions = models.Question.objects.filter(quiz_id=quiz_id)
+        serialized_questions = serializers.QuestionAdminSerializer(
+            all_questions, many=True, context={'quiz_id': quiz_id}
+        ).data
+
+        return Response(serialized_questions, status=status.HTTP_201_CREATED)
+
+    def perform_update(self, serializer):
+        quiz_id = self.kwargs['quiz_id']
+        question_id = self.kwargs['pk']
+        quiz = get_object_or_404(models.Quiz, pk=quiz_id)
+        question = get_object_or_404(models.Question, pk=question_id,
+                                     quiz=quiz)
+        serializer.save(quiz=quiz)
+
+    def perform_destroy(self, instance):
+        instance.delete()
+
+
+class QuizAdminViewSet(viewsets.ModelViewSet):
+    """
+    Представление для работы с квизами со стороны администратора.
+    """
+    serializer_class = serializers.QuizAdminSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # для оптимизации запросов к БД, чтобы избежать N+1 проблемы,
+        # используем prefetch_related вместо all()
+        # return models.Quiz.objects.all()
+        return models.Quiz.objects.prefetch_related('tags').all()
+
+    def perform_create(self, serializer):
+        quiz = serializer.save()
+        tags_data = self.request.data.get('tags', [])
+        tag_ids = [tag_data.get('id') for tag_data in tags_data]
+        quiz.tags.set(tag_ids)
+
+    def perform_update(self, serializer):
+        quiz = serializer.save()
+        tags_data = self.request.data.get('tags', [])
+        tag_ids = [tag_data.get('id') for tag_data in tags_data]
+        quiz.tags.set(tag_ids)
+
+    def perform_destroy(self, instance):
+        instance.delete()
+
+
+class QuizVolumeViewSet(viewsets.ModelViewSet):
+    """
+    Представление для работы с учебными материалами определённого квиза
+    со стороны администратора.
+    """
+    serializer_class = serializers.VolumeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    # Пустой QuerySet для схемы Swagger.
+    queryset = models.Volume.objects.none()
+
+    def get_queryset(self):
+        # queryset только для целей схемы Swagger.
+        if getattr(self, 'swagger_fake_view', False):
+            return self.queryset
+        quiz_id = self.kwargs['quiz_id']
+        return models.Volume.objects.filter(quiz__id=quiz_id)
+
+    def perform_create(self, serializer):
+        quiz_id = self.kwargs['quiz_id']
+        quiz = models.Quiz.objects.get(id=quiz_id)
+        serializer.save(quiz=quiz)

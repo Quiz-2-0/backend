@@ -21,12 +21,16 @@ class VolumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Volume
         fields = [
+            'id',
             'name',
             'description',
         ]
 
 
 class TagSerializer(serializers.ModelSerializer):
+    # делаем name необязательным полем, чтобы при добавлении тега при создании
+    # квиза не получать ошибку об отсутствии обязательного параметра name
+    name = serializers.CharField(required=False)
 
     class Meta:
         model = Tag
@@ -48,7 +52,7 @@ class AnswerListSerializer(serializers.ModelSerializer):
 
 
 class AnswerSerializer(serializers.ModelSerializer):
-    answers_list = AnswerListSerializer(many=True, read_only=True)
+    answers_list = AnswerListSerializer(many=True)
 
     class Meta:
         model = Answer
@@ -56,8 +60,16 @@ class AnswerSerializer(serializers.ModelSerializer):
             'id',
             'text',
             'image',
-            'answers_list'
+            'answers_list',
         ]
+
+    # Переопределён метод create для обработки вложенных данных (answers_list)
+    def create(self, validated_data):
+        answers_list_data = validated_data.pop('answers_list', [])
+        answer = Answer.objects.create(**validated_data)
+        for answer_list_data in answers_list_data:
+            AnswerList.objects.create(answer=answer, **answer_list_data)
+        return answer
 
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -219,6 +231,210 @@ class UserQuestionSaveSerializer(serializers.ModelSerializer):
             'question',
             'response_time',
         ]
+
+
+class QuestionAdminSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для обработки вложенных данных.
+    Предназначен для обработки данных на стороне администратора.
+    """
+    answers = AnswerSerializer(many=True)
+
+    class Meta:
+        model = Question
+        fields = ['id', 'question_type', 'text', 'image', 'answers']
+
+    def create(self, validated_data):
+        answers_data = validated_data.pop('answers', [])
+        quiz_id = self.context['quiz_id']
+        question = Question.objects.create(quiz_id=quiz_id, **validated_data)
+        for answer_data in answers_data:
+            answers_list_data = answer_data.pop('answers_list', [])
+            # Получаем значение is_right или False, если не передано.
+            # Т.к. в моделях это поле необходимо, без такой проверки не
+            # получится выполнить POST-запрос. Либо так, либо в модели Answer,
+            # поле is_right сделать null=True.
+            # В данный момент is_right можем передавать, а можем и не
+            # передавать.
+            is_right = answer_data.pop('is_right', False)
+            answer = Answer.objects.create(
+                question=question, is_right=is_right, **answer_data
+            )
+            for answer_list_data in answers_list_data:
+                AnswerList.objects.create(answer=answer, **answer_list_data)
+
+        return question
+
+    def update(self, instance, validated_data):
+        answers_data = validated_data.pop('answers', [])
+        instance.question_type = validated_data.get('question_type',
+                                                    instance.question_type)
+        instance.text = validated_data.get('text', instance.text)
+        instance.image = validated_data.get('image', instance.image)
+        instance.save()
+
+        # Обновляем данные ответов
+        for answer_data in answers_data:
+            answer_id = answer_data.get('id', None)
+            if answer_id is None:
+                # Если id ответа не передан, значит это новый ответ,
+                # создаем его
+                answers_list_data = answer_data.pop('answers_list', [])
+                is_right = answer_data.pop('is_right', False)
+                answer = Answer.objects.create(question=instance,
+                                               is_right=is_right,
+                                               **answer_data)
+                for answer_list_data in answers_list_data:
+                    AnswerList.objects.create(answer=answer,
+                                              **answer_list_data)
+            else:
+                # Если id ответа передан, значит это существующий ответ,
+                # обновляем его
+                try:
+                    answer = Answer.objects.get(id=answer_id,
+                                                question=instance)
+                except Answer.DoesNotExist:
+                    continue
+                answer.text = answer_data.get('text', answer.text)
+                answer.image = answer_data.get('image', answer.image)
+                answer.save()
+
+        return instance
+
+
+class QuizAdminSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для работы с квизами на стороне администратора.
+    """
+    tags = TagSerializer(many=True, required=False)
+    questions = QuestionAdminSerializer(many=True, required=False)
+    volumes = VolumeSerializer(many=True, required=False)
+
+    class Meta:
+        model = Quiz
+        fields = ['id', 'image', 'description', 'directory', 'name',
+                  'duration', 'level', 'question_amount', 'threshold', 'tags',
+                  'questions', 'volumes',
+                  ]
+
+    def create(self, validated_data):
+        tags_data = validated_data.pop('tags', [])
+        quiz = Quiz.objects.create(**validated_data)
+
+        # В этом месте мы не добавляем теги, только сохраняем квиз
+
+        return quiz
+
+    def update(self, instance, validated_data):
+        tags_data = validated_data.pop('tags', [])
+        instance = super().update(instance, validated_data)
+
+        tag_ids = [tag_data.get('id') for tag_data in tags_data]
+        instance.tags.set(tag_ids)  # Обновляем теги
+
+        return instance
+
+
+class QuestionAdminSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для обработки вложенных данных.
+    Предназначен для обработки данных на стороне администратора.
+    """
+    answers = AnswerSerializer(many=True)
+
+    class Meta:
+        model = Question
+        fields = ['id', 'question_type', 'text', 'image', 'answers']
+
+    def create(self, validated_data):
+        answers_data = validated_data.pop('answers', [])
+        quiz_id = self.context['quiz_id']
+        question = Question.objects.create(quiz_id=quiz_id, **validated_data)
+        for answer_data in answers_data:
+            answers_list_data = answer_data.pop('answers_list', [])
+            # Получаем значение is_right или False, если не передано.
+            # Т.к. в моделях это поле необходимо, без такой проверки не
+            # получится выполнить POST-запрос. Либо так, либо в модели Answer,
+            # поле is_right сделать null=True.
+            # В данный момент is_right можем передавать, а можем и не
+            # передавать.
+            is_right = answer_data.pop('is_right', False)
+            answer = Answer.objects.create(
+                question=question, is_right=is_right, **answer_data
+            )
+            for answer_list_data in answers_list_data:
+                AnswerList.objects.create(answer=answer, **answer_list_data)
+
+        return question
+
+    def update(self, instance, validated_data):
+        answers_data = validated_data.pop('answers', [])
+        instance.question_type = validated_data.get('question_type',
+                                                    instance.question_type)
+        instance.text = validated_data.get('text', instance.text)
+        instance.image = validated_data.get('image', instance.image)
+        instance.save()
+
+        # Обновляем данные ответов
+        for answer_data in answers_data:
+            answer_id = answer_data.get('id', None)
+            if answer_id is None:
+                # Если id ответа не передан, значит это новый ответ,
+                # создаем его
+                answers_list_data = answer_data.pop('answers_list', [])
+                is_right = answer_data.pop('is_right', False)
+                answer = Answer.objects.create(question=instance,
+                                               is_right=is_right,
+                                               **answer_data)
+                for answer_list_data in answers_list_data:
+                    AnswerList.objects.create(answer=answer,
+                                              **answer_list_data)
+            else:
+                # Если id ответа передан, значит это существующий ответ,
+                # обновляем его
+                try:
+                    answer = Answer.objects.get(id=answer_id,
+                                                question=instance)
+                except Answer.DoesNotExist:
+                    continue
+                answer.text = answer_data.get('text', answer.text)
+                answer.image = answer_data.get('image', answer.image)
+                answer.save()
+
+        return instance
+
+
+class QuizAdminSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для работы с квизами на стороне администратора.
+    """
+    tags = TagSerializer(many=True, required=False)
+    questions = QuestionAdminSerializer(many=True, required=False)
+    volumes = VolumeSerializer(many=True, required=False)
+
+    class Meta:
+        model = Quiz
+        fields = ['id', 'image', 'description', 'directory', 'name',
+                  'duration', 'level', 'question_amount', 'threshold', 'tags',
+                  'questions', 'volumes',
+                  ]
+
+    def create(self, validated_data):
+        tags_data = validated_data.pop('tags', [])
+        quiz = Quiz.objects.create(**validated_data)
+
+        # В этом месте мы не добавляем теги, только сохраняем квиз
+
+        return quiz
+
+    def update(self, instance, validated_data):
+        tags_data = validated_data.pop('tags', [])
+        instance = super().update(instance, validated_data)
+
+        tag_ids = [tag_data.get('id') for tag_data in tags_data]
+        instance.tags.set(tag_ids)  # Обновляем теги
+
+        return instance
 
 
 class AssignedSerializer(serializers.ModelSerializer):
