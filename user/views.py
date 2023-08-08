@@ -4,10 +4,11 @@ from django.shortcuts import get_object_or_404
 from rest_framework import mixins, viewsets, status, generics, permissions
 from rest_framework.response import Response
 
-from user.models import User, Department
+from user.models import User, DefaultAvatar, Department
 from user.serializers import (
     UserCreateSerializer,
     UserResetPasswordSerializer,
+    DefaultAvatarSerializer,
     DepartmentSerializer,
     UserSerializer,
     UserAdminSerializer
@@ -63,3 +64,21 @@ class UserAdminViewSet(
     serializer_class = UserAdminSerializer
     queryset = User.objects.all()
 
+
+class DefaultAvatarListView(generics.ListAPIView):
+    """
+    Представление для получения списка предустановленных аватаров.
+    """
+    queryset = DefaultAvatar.objects.all()
+    serializer_class = DefaultAvatarSerializer
+
+
+class UserAvatarUploadView(generics.CreateAPIView):
+    """
+    Представление для сохранения загруженного пользователем аватара.
+    """
+    serializer_class = UserCreateSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save()
