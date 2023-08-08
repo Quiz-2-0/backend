@@ -27,9 +27,6 @@ router_v1.register(
     basename='quiz-volumes-list'
 )
 router_v1.register(
-    'quizes/questions', QuestionAdminViewSet, basename='quiz-questions'
-)
-router_v1.register(
     r'quizes/(?P<quiz_id>[\d]+)/questions_list', QuestionListAdminViewSet,
     basename='quiz-questions-list'
 )
