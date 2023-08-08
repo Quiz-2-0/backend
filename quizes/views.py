@@ -146,12 +146,10 @@ class QuestionAdminViewSet(viewsets.ModelViewSet):
             data=request.data, context={'quiz_id': quiz_id}
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        created_questions = serializer.save()
 
-        # Получите список всех вопросов квиза и их ответов
-        all_questions = models.Question.objects.filter(quiz_id=quiz_id)
         serialized_questions = serializers.QuestionAdminSerializer(
-            all_questions, many=True, context={'quiz_id': quiz_id}
+            created_questions, context={'quiz_id': quiz_id}
         ).data
 
         return Response(serialized_questions, status=status.HTTP_201_CREATED)
@@ -166,6 +164,31 @@ class QuestionAdminViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         instance.delete()
+
+
+class QuestionListAdminViewSet(viewsets.ModelViewSet):
+    """
+    Представление для создания списка вопросов квизов на стороне
+    администратора.
+    """
+    serializer_class = serializers.QuestionAdminSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    # Пустой QuerySet для схемы Swagger.
+    queryset = models.Volume.objects.none()
+
+    def create(self, request, *args, **kwargs):
+        quiz_id = self.kwargs['quiz_id']
+        serializer = serializers.QuestionAdminSerializer(
+            data=request.data, many=True, context={'quiz_id': quiz_id}
+        )
+        serializer.is_valid(raise_exception=True)
+        created_questions = serializer.save()
+
+        serialized_questions = serializers.QuestionAdminSerializer(
+            created_questions, many=True, context={'quiz_id': quiz_id}
+        ).data
+
+        return Response(serialized_questions, status=status.HTTP_201_CREATED)
 
 
 class QuizAdminViewSet(viewsets.ModelViewSet):
