@@ -13,7 +13,7 @@ from quizes.models import (
     UserQuestion,
     Statistic,
     AnswerList,
-    AssignedQuiz
+    AssignedQuiz,
 )
 
 User = get_user_model()
