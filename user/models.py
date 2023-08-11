@@ -100,4 +100,12 @@ class CustomUser(AbstractUser):
         return self.role == self.UserRoleChoice.ADMIN or self.is_superuser
 
 
+class DefaultAvatar(models.Model):
+    avatar = models.ImageField(upload_to='predefined_avatars/')
+    description = models.TextField()
+
+    def __str__(self):
+        return self.description
+
+
 User = get_user_model()
