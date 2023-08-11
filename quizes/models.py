@@ -390,10 +390,11 @@ class UserQuestion(models.Model):
                 return (self.user_answers.first().answer_text ==
                         self.question.answers.first().text)
             if question_type == 'LST':
-                answers = self.user_answers.objects.all()
-                for answer in answers:
-                    if answer.answer_list.answer != answer.user_answer.answer:
-                        return False
+                user_answers = self.user_answers.all()
+                for answer in user_answers:
+                    for ans_lst in answer.user_answers_list.all():
+                        if ans_lst.answer_list.answer != ans_lst.user_answer.answer:
+                            return False
                 return True
             return False
         question_type = self.question.question_type

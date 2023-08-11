@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import permissions, viewsets, response, status, mixins, generics
+from rest_framework import permissions, viewsets, status, mixins, generics
 from rest_framework.response import Response
 
 from quizes import models, serializers
@@ -15,7 +15,7 @@ class QuizViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         if not self.request.user.is_authenticated:
-            return response.Response(status=status.HTTP_401_UNAUTHORIZED)
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
         directory = self.request.user.department
         user = self.request.user
         new_queryset = models.Quiz.objects.select_related(
@@ -36,10 +36,10 @@ class UserQuestionViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        statistic = models.Statistic.objects.get_or_create(
+        statistic, _ = models.Statistic.objects.get_or_create(
             user=self.request.user.id,
             quiz=self.kwargs.get('quiz_id'),
-        )[0]
+        )
 
         data = request.data
         data['statistic'] = statistic.id
@@ -52,7 +52,7 @@ class UserQuestionViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
         save_serializer.is_valid(raise_exception=True)
         save_serializer.save()
 
-        return response.Response(status=status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_201_CREATED)
 
 
 class QuizLevelViewSet(viewsets.ModelViewSet):
@@ -64,8 +64,8 @@ class QuizLevelViewSet(viewsets.ModelViewSet):
         serializer = serializers.QuizLevelSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return response.Response(serializer.data,
-                                 status=status.HTTP_201_CREATED)
+        return Response(serializer.data,
+                        status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -73,12 +73,12 @@ class QuizLevelViewSet(viewsets.ModelViewSet):
                                                      data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return response.Response(serializer.data)
+        return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
-        return response.Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -90,20 +90,20 @@ class TagViewSet(viewsets.ModelViewSet):
         serializer = serializers.TagSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return response.Response(serializer.data,
-                                 status=status.HTTP_201_CREATED)
+        return Response(serializer.data,
+                        status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = serializers.TagSerializer(instance, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return response.Response(serializer.data)
+        return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
-        return response.Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class AssignedQuizViewSet(generics.CreateAPIView):
@@ -116,12 +116,14 @@ class AssignedQuizViewSet(generics.CreateAPIView):
         quizes = request.data.get('quizes')
         for user in users:
             for quiz in quizes:
+                # TODO использовать сериализатор для получения объектов
+                #  и что-то вроде bulk_update для создания записей
                 q = get_object_or_404(models.Quiz, id=quiz['id'])
                 u = get_object_or_404(User, id=user['id'])
                 _, _ = models.AssignedQuiz.objects.get_or_create(
                     user=u, quiz=q
                 )
-        return response.Response(status=status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_201_CREATED)
 
 
 class QuestionAdminViewSet(viewsets.ModelViewSet):
@@ -241,3 +243,76 @@ class QuizVolumeViewSet(viewsets.ModelViewSet):
         quiz_id = self.kwargs['quiz_id']
         quiz = models.Quiz.objects.get(id=quiz_id)
         serializer.save(quiz=quiz)
+
+
+class StatisticApiView(generics.RetrieveAPIView):
+    # TODO сделать сериализатор
+    queryset = models.Statistic.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        def _get_one(user_question, data):
+            data['answers'] = []
+            for answer in user_question.question.answers.all():
+                user_answer = models.UserAnswer.objects.filter(
+                            answer=answer, user_question=user_question
+                        ).first()
+                answered = False
+                is_right = None
+                if user_answer:
+                    answered = True
+                    is_right = answer.is_right
+                data['answers'].append({
+                        'answer_text': answer.text,
+                        'answered': answered,
+                        'answer_right': is_right
+                    })
+            return data
+
+        def _get_lst(user_question, data):
+            data['answers'] = {}
+            for user_answer in user_question.user_answers.all():
+                data['answers'][user_answer.answer.text] = []
+                for user_answer_list in user_answer.user_answers_list.all():
+                    is_right = (user_answer_list.user_answer.answer ==
+                                user_answer_list.answer_list.answer)
+                    answer = {
+                            'text': user_answer_list.answer_list.text,
+                            'answer_right': is_right
+                        }
+                    data['answers'][user_answer.answer.text].append(answer)
+            return data
+
+        def _get_opn(user_question, data):
+            data['answer'] = user_question.question.answers.first().text
+            data['user_answer'] = (
+                user_question.user_answers.first().answer_text
+            )
+            return data
+
+        quiz = self.kwargs.get('quiz_id')
+        user = request.user
+        # TODO запросы с джойнами
+        stat = get_object_or_404(models.Statistic, quiz=quiz, user=user)
+        if stat.is_passed:
+            data = []
+            for user_question in stat.user_questions.all():
+                question_type = user_question.question.question_type
+                question = {
+                    'question_type': question_type,
+                    'question': user_question.question.text,
+                    'explanation': user_question.question.explanation,
+                    'is_right': user_question.is_right
+                }
+                if question_type in ('ONE', 'MNY'):
+                    question = _get_one(user_question, question)
+                elif question_type == 'LST':
+                    question = _get_lst(user_question, question)
+                elif question_type == 'OPN':
+                    question = _get_opn(user_question, question)
+                else:
+                    # TODO подумать над обработкой ошибки
+                    continue
+                data.append(question)
+            return Response(data=data, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_404_NOT_FOUND)
