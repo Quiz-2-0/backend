@@ -271,17 +271,21 @@ class StatisticApiView(generics.RetrieveAPIView):
             return data
 
         def _get_lst(user_question, data):
-            data['answers'] = {}
+            data['answers'] = []
             for user_answer in user_question.user_answers.all():
-                data['answers'][user_answer.answer.text] = []
+                data_answer = {
+                    'answer_text': user_answer.answer.text
+                }
+                data_answer['answer_list'] = []
                 for user_answer_list in user_answer.user_answers_list.all():
                     is_right = (user_answer_list.user_answer.answer ==
                                 user_answer_list.answer_list.answer)
-                    answer = {
+                    answer_list = {
                             'text': user_answer_list.answer_list.text,
                             'answer_right': is_right
                         }
-                    data['answers'][user_answer.answer.text].append(answer)
+                    data_answer['answer_list'].append(answer_list)
+                data['answers'].append(data_answer)
             return data
 
         def _get_opn(user_question, data):
