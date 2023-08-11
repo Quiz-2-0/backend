@@ -1,5 +1,5 @@
 from django.contrib import admin
-from user.models import User, Department
+from user.models import User, DefaultAvatar, Department
 
 
 @admin.register(User)
@@ -17,3 +17,8 @@ class UserAdmin(admin.ModelAdmin):
 class DepartmentAdmin(admin.ModelAdmin):
     list_display = ('name',)
     search_fields = ('name',)
+
+
+@admin.register(DefaultAvatar)
+class DefaultAvatarAdmin(admin.ModelAdmin):
+    list_display = ('avatar', 'description')

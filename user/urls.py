@@ -3,13 +3,21 @@ from rest_framework.routers import DefaultRouter
 
 from django.urls import path, include
 
-from user.views import UserViewSet, UserResetPasswordViewSet, UserGetViewSet
+from user.views import (
+    AvatarListView,
+    UserResetPasswordViewSet,
+    UserGetViewSet,
+)
+from ratings.views import UserAchivementViewSet, RatingViewSet
 
 
 router_v1 = DefaultRouter()
-router_v1.register('create', UserViewSet)
+router_v1.register('achivements', UserAchivementViewSet, basename='achivements')
+router_v1.register('ratings', RatingViewSet, basename='ratings')
+
 urlpatterns = [
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('avatar/', AvatarListView.as_view(), name='avatars'),
     path('reset/', UserResetPasswordViewSet.as_view()),
     path('me/', UserGetViewSet.as_view()),
     path('', include(router_v1.urls)),

@@ -1,19 +1,19 @@
 from rest_framework.routers import DefaultRouter
-from django.urls import path, include
-from .views import QuizViewSet, UserAnswerViewSet, StatisticViewSet
+from django.urls import path, include, re_path
+from .views import (
+    QuizViewSet,
+    UserQuestionViewSet,
+    StatisticApiView
+)
 
 
 router_v1 = DefaultRouter()
 router_v1.register('', QuizViewSet, basename='quizes')
 router_v1.register(
-     '(?P<quiz_id>[\d]+)/answer', UserAnswerViewSet, basename='user_unswer'
-)
-router_v1.register(
-     '(?P<quiz_id>[\d]+)/statistic', StatisticViewSet, basename='statistic'
+     r'(?P<quiz_id>[\d]+)/answer', UserQuestionViewSet, basename='userquestion'
 )
 
-urlpatterns = [  
+urlpatterns = [
+     re_path(r'(?P<quiz_id>[\d]+)/statistic', StatisticApiView.as_view()),
      path('', include(router_v1.urls)),
 ]
-
-urlpatterns += router_v1.urls
