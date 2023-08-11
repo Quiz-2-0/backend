@@ -247,6 +247,7 @@ class QuizVolumeViewSet(viewsets.ModelViewSet):
 
 class StatisticApiView(generics.RetrieveAPIView):
     # TODO сделать сериализатор
+    serializer_class = serializers.StatisticSerializer
     queryset = models.Statistic.objects.all()
     permission_classes = [permissions.IsAuthenticated]
 

@@ -144,9 +144,9 @@ class Rating(models.Model):
         ):
             self.user_level = self.user_level.next_level.first()
         self.save()
-        self.user.achivments.set(Achivment.objects.all())
-        for achivement in self.user.user_achivments.all():
-            achivement.set_achivment()
+        self.user.achivements.set(Achivement.objects.all())
+        for achivement in self.user.user_achivements.all():
+            achivement.set_achivement()
 
     class Meta:
         verbose_name = 'Рейтинг пользователя'
@@ -157,7 +157,7 @@ class Rating(models.Model):
         return f'Рейтинг пользователя {self.user}'
 
 
-class Achivment(models.Model):
+class Achivement(models.Model):
     name = models.CharField(
         max_length=100,
         verbose_name='Название достижения',
@@ -167,7 +167,7 @@ class Achivment(models.Model):
     )
     image = models.ImageField(
         verbose_name='изображение',
-        upload_to='achivments/image/',
+        upload_to='achivements/image/',
         blank=True
     )
     num_of_completed = models.PositiveIntegerField(
@@ -209,9 +209,9 @@ class Achivment(models.Model):
 
     user = models.ManyToManyField(
         User,
-        through='UserAchvment',
-        through_fields=('achivment', 'user',),
-        related_name='achivments'
+        through='UserAchivement',
+        through_fields=('achivement', 'user',),
+        related_name='achivements'
     )
 
     def count_fields(self):
@@ -230,16 +230,16 @@ class Achivment(models.Model):
         return f'Достижение {self.name}'
 
 
-class UserAchvment(models.Model):
+class UserAchivement(models.Model):
     user = models.ForeignKey(
         User,
-        related_name='user_achivments',
+        related_name='user_achivements',
         verbose_name='Пользователь',
         on_delete=models.CASCADE
     )
-    achivment = models.ForeignKey(
-        Achivment,
-        related_name='user_achivments',
+    achivement = models.ForeignKey(
+        Achivement,
+        related_name='user_achivements',
         verbose_name='Достижение',
         on_delete=models.CASCADE
     )
@@ -261,44 +261,44 @@ class UserAchvment(models.Model):
         verbose_name='Дата получения достижения',
     )
 
-    def set_achivment(self):
+    def set_achivement(self):
         if not self.achived:
-            self.points_to_get = self.achivment.count_fields()
+            self.points_to_get = self.achivement.count_fields()
             self.points_now = min(
                 self.user.rating.count_completed,
-                self.achivment.num_of_completed
+                self.achivement.num_of_completed
             )
             self.points_now += min(
                 self.user.rating.count_passed,
-                self.achivment.num_of_passed
+                self.achivement.num_of_passed
             )
             self.points_now += min(
                 self.user.rating.count_failed,
-                self.achivment.num_of_failed
+                self.achivement.num_of_failed
             )
             self.points_now += min(
                 self.user.rating.count_assigned,
-                self.achivment.num_of_assigned
+                self.achivement.num_of_assigned
             )
             self.points_now += min(
                 self.user.rating.answered_questions,
-                self.achivment.num_of_questions
+                self.achivement.num_of_questions
             )
             self.points_now += min(
                 self.user.rating.right_questions,
-                self.achivment.num_of_right_questions
+                self.achivement.num_of_right_questions
             )
             self.points_now += min(
                 self.user.rating.wrong_questions,
-                self.achivment.num_of_wrong_questions
+                self.achivement.num_of_wrong_questions
             )
             self.points_now += min(
                 self.user.rating.passed_time,
-                self.achivment.time_in_quizes
+                self.achivement.time_in_quizes
             )
             self.points_now += min(
                 self.user.rating.user_level.level,
-                self.achivment.level
+                self.achivement.level
             )
             if self.points_now == self.points_to_get:
                 self.achived = True
@@ -310,5 +310,5 @@ class UserAchvment(models.Model):
         verbose_name_plural = 'Достижения пользователей'
 
     def __str__(self):
-        return (f'{self.achivment} пользователя {self.user} '
+        return (f'{self.achivement} пользователя {self.user} '
                 f'- {"получена" if self.achived else "в процессе"}')

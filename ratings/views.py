@@ -1,28 +1,28 @@
 from rest_framework import permissions, viewsets, mixins, response, status
-from .models import UserAchvment, Rating
+from .models import UserAchivement, Rating
 from rest_framework.decorators import action
 from .serializers import (
-    UserAchivmentSerializer,
-    UserAchivmentShortSerializer,
+    UserAchivementSerializer,
+    UserAchivementShortSerializer,
     RatingSerializer,
     RatingShortSerializer
 )
 
 
-class UserAchivmentViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
-    serializer_class = UserAchivmentSerializer
+class UserAchivementViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    serializer_class = UserAchivementSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return UserAchvment.objects.filter(user=self.request.user.id)
+        return UserAchivement.objects.filter(user=self.request.user.id)
 
     @action(detail=False, methods=['get'])
     def short(self, request):
         user = request.user.id
-        queryset = UserAchvment.objects.filter(
+        queryset = UserAchivement.objects.filter(
                 user=user, achived=True
             ).order_by('-get_date')[:4]
-        serializer = UserAchivmentShortSerializer(queryset, many=True)
+        serializer = UserAchivementShortSerializer(queryset, many=True)
         return response.Response(
             status=status.HTTP_200_OK, data=serializer.data
         )

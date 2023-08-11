@@ -19,6 +19,13 @@ from quizes.models import (
 User = get_user_model()
 
 
+class StatisticSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Statistic
+        fields = '__all__'
+
+
 class VolumeSerializer(serializers.ModelSerializer):
 
     class Meta:

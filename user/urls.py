@@ -8,11 +8,11 @@ from user.views import (
     UserResetPasswordViewSet,
     UserGetViewSet,
 )
-from ratings.views import UserAchivmentViewSet, RatingViewSet
+from ratings.views import UserAchivementViewSet, RatingViewSet
 
 
 router_v1 = DefaultRouter()
-router_v1.register('achivments', UserAchivmentViewSet, basename='achivments')
+router_v1.register('achivements', UserAchivementViewSet, basename='achivements')
 router_v1.register('ratings', RatingViewSet, basename='ratings')
 
 urlpatterns = [

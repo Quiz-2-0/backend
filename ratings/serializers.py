@@ -1,17 +1,17 @@
 from rest_framework import serializers
 from .models import (
     Rating,
-    UserAchvment
+    UserAchivement
 )
 
 
-class UserAchivmentSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='achivment.name')
-    description = serializers.CharField(source='achivment.description')
-    image = serializers.CharField(source='achivment.image')
+class UserAchivementSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='achivement.name')
+    description = serializers.CharField(source='achivement.description')
+    image = serializers.CharField(source='achivement.image')
 
     class Meta:
-        model = UserAchvment
+        model = UserAchivement
         fields = [
             'id',
             'points_now',
@@ -23,12 +23,12 @@ class UserAchivmentSerializer(serializers.ModelSerializer):
         ]
 
 
-class UserAchivmentShortSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='achivment.name')
-    image = serializers.ImageField(source='achivment.image')
+class UserAchivementShortSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='achivement.name')
+    image = serializers.ImageField(source='achivement.image')
 
     class Meta:
-        model = UserAchvment
+        model = UserAchivement
         fields = [
             'name',
             'image',
