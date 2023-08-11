@@ -6,10 +6,12 @@ from rest_framework.response import Response
 
 from user.models import User, DefaultAvatar, Department
 from user.serializers import (
+    CustomUser,
+    DefaultAvatarReadSerializer,
+    DefaultAvatarWriteSerializer,
+    DepartmentSerializer,
     UserCreateSerializer,
     UserResetPasswordSerializer,
-    DefaultAvatarSerializer,
-    DepartmentSerializer,
     UserSerializer,
     UserAdminSerializer
 )
@@ -65,20 +67,26 @@ class UserAdminViewSet(
     queryset = User.objects.all()
 
 
-class DefaultAvatarListView(generics.ListAPIView):
+class AvatarListView(generics.ListCreateAPIView):
     """
-    Представление для получения списка предустановленных аватаров.
+    Представление для получения списка предустановленных аватаров и создания
+    нового аватара.
     """
     queryset = DefaultAvatar.objects.all()
-    serializer_class = DefaultAvatarSerializer
 
-
-class UserAvatarUploadView(generics.CreateAPIView):
-    """
-    Представление для сохранения загруженного пользователем аватара.
-    """
-    serializer_class = UserCreateSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return DefaultAvatarReadSerializer
+        elif self.request.method == 'POST':
+            return DefaultAvatarWriteSerializer
 
     def perform_create(self, serializer):
-        serializer.save()
+        # Добавление аватара текущему пользователю
+        self.request.user.avatar = serializer.validated_data['avatar']
+        self.request.user.save()
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        avatar_url = request.user.avatar.url if request.user.avatar else None
+        response.data['avatar'] = avatar_url
+        return response

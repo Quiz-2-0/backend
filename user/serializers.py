@@ -9,7 +9,7 @@ from django.core.files.base import ContentFile
 
 from django.utils.translation import gettext_lazy as _
 
-from user.models import User, DefaultAvatar, Department
+from user.models import User, DefaultAvatar, Department, CustomUser
 from user.utils import password_mail
 from quizes.models import AssignedQuiz
 from ratings.models import Rating
@@ -48,10 +48,8 @@ class Base64ImageField(serializers.ImageField):
 
 class UserCreateSerializer(serializers.ModelSerializer):
     """
-    Сериализатор для обработки создания пользователя с определёнными полями,
-    включая поле аватара пользователя.
+    Сериализатор для создания пользователя с определёнными полями.
     """
-    avatar = Base64ImageField()
     department = serializers.SlugRelatedField(
         slug_field='name',
         queryset=Department.objects.all()
@@ -67,7 +65,6 @@ class UserCreateSerializer(serializers.ModelSerializer):
             'lastName',
             'position',
             'role',
-            'avatar',
         )
 
     def create(self, validated_data):
@@ -159,10 +156,24 @@ class DepartmentSerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 
-class DefaultAvatarSerializer(serializers.ModelSerializer):
+class DefaultAvatarReadSerializer(serializers.ModelSerializer):
     """
-    Сериализатор для обработки выбора предустановленных аватарок.
+    Сериализатор для получения списка предустановленных аватарок.
     """
+
     class Meta:
         model = DefaultAvatar
         fields = '__all__'
+
+
+class DefaultAvatarWriteSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для записи аватара от пользователя.
+    """
+    avatar = Base64ImageField()
+
+    class Meta:
+        model = CustomUser
+        fields = (
+            'avatar',
+        )
