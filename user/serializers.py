@@ -118,6 +118,8 @@ class UserSerializer(serializers.ModelSerializer):
         source='rating.user_level.description'
     )
     to_next_level = serializers.IntegerField(source='rating.to_next_level')
+    in_this_level = serializers.IntegerField(source='rating.in_this_level')
+    earned_in_level = serializers.IntegerField(source='rating.earned_in_level')
 
     class Meta:
         model = User
@@ -139,6 +141,8 @@ class UserSerializer(serializers.ModelSerializer):
             'level_image',
             'level_description',
             'to_next_level',
+            'in_this_level',
+            'earned_in_level',
         ]
 
 
