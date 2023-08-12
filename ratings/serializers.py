@@ -8,7 +8,7 @@ from .models import (
 class UserAchivementSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='achivement.name')
     description = serializers.CharField(source='achivement.description')
-    image = serializers.CharField(source='achivement.image')
+    image = serializers.ImageField(source='achivement.image')
 
     class Meta:
         model = UserAchivement

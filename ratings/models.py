@@ -116,6 +116,20 @@ class Rating(models.Model):
         return self.user_level.to_level_up - self.count_passed
 
     @property
+    def in_this_level(self):
+        if self.user_level.level != 1:
+            return (self.user_level.to_level_up -
+                    self.user_level.prev_level.to_level_up)
+        return self.user_level.to_level_up
+
+    @property
+    def earned_in_level(self):
+        if self.user_level.level != 1:
+            return (self.count_passed -
+                    self.user_level.prev_level.to_level_up)
+        return self.count_passed
+
+    @property
     def right_precent(self):
         return int(
             self.right_questions / (self.answered_questions / 100)
