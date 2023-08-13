@@ -3,11 +3,17 @@ from django.urls import path, include, re_path
 from .views import (
     QuizViewSet,
     UserQuestionViewSet,
-    StatisticApiView
+    StatisticApiView,
+    NotComplitedQuizViewSet
 )
 
 
 router_v1 = DefaultRouter()
+router_v1.register(
+    'not_complited',
+    NotComplitedQuizViewSet,
+    basename='not_complited_quizes'
+)
 router_v1.register('', QuizViewSet, basename='quizes')
 router_v1.register(
      r'(?P<quiz_id>[\d]+)/answer', UserQuestionViewSet, basename='userquestion'

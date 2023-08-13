@@ -42,7 +42,8 @@ class Base64ImageField(serializers.ImageField):
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')
             ext = format.split('/')[-1]
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+            data = ContentFile(base64.b64decode(imgstr),
+                               name=f'image{str(uuid.uuid1())[:6]}.' + ext)
         return super().to_internal_value(data)
 
 
@@ -50,9 +51,16 @@ class UserCreateSerializer(serializers.ModelSerializer):
     """
     Сериализатор для создания пользователя с определёнными полями.
     """
+    firstName = serializers.CharField(max_length=150, required=True)
+    lastName = serializers.CharField(max_length=150, required=True)
+    patronymic = serializers.CharField(max_length=150, required=True)
+    email = serializers.EmailField(required=True)
+    position = serializers.CharField(max_length=150, required=True)
+    role = serializers.ChoiceField(choices=('EMP', 'AD'), required=True)
     department = serializers.SlugRelatedField(
-        slug_field='name',
-        queryset=Department.objects.all()
+        slug_field='id',
+        queryset=Department.objects.all(),
+        required=True
     )
 
     class Meta:

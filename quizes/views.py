@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from quizes import models, serializers
 from django.db.models import Exists, OuterRef
 from django.contrib.auth import get_user_model
+from django.db.models import F
 
 User = get_user_model()
 
@@ -30,15 +31,41 @@ class QuizViewSet(viewsets.ReadOnlyModelViewSet):
         return new_queryset
 
 
+# TODO перенести в QuizViewSet
+class NotComplitedQuizViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    serializer_class = serializers.QuizSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if not self.request.user.is_authenticated:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        directory = self.request.user.department
+        user = self.request.user
+        new_queryset = models.Quiz.objects.select_related(
+            'directory', 'level'
+        ).prefetch_related('tags').filter(
+            directory=directory
+        ).annotate(
+            appointed=Exists(models.AssignedQuiz.objects.filter(
+                quiz__id=OuterRef('id'), user__id=user.id
+            ))
+        ).filter(
+            statistics__count_answered__gt=0,
+            statistics__count_questions__gt=F('statistics__count_answered')
+        )
+        return new_queryset
+
+
 class UserQuestionViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     queryset = models.UserQuestion.objects.all()
     serializer_class = serializers.UserQuestionSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
+        quiz = get_object_or_404(models.Quiz, id=self.kwargs.get('quiz_id'))
         statistic, _ = models.Statistic.objects.get_or_create(
-            user=self.request.user.id,
-            quiz=self.kwargs.get('quiz_id'),
+            user=self.request.user,
+            quiz=quiz,
         )
 
         data = request.data
@@ -58,7 +85,7 @@ class UserQuestionViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
 class QuizLevelViewSet(viewsets.ModelViewSet):
     queryset = models.QuizLevel.objects.all()
     serializer_class = serializers.QuizLevelSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAdminUser]
 
     def create(self, request, *args, **kwargs):
         serializer = serializers.QuizLevelSerializer(data=request.data)
@@ -84,7 +111,7 @@ class QuizLevelViewSet(viewsets.ModelViewSet):
 class TagViewSet(viewsets.ModelViewSet):
     queryset = models.Tag.objects.all()
     serializer_class = serializers.TagSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAdminUser]
 
     def create(self, request, *args, **kwargs):
         serializer = serializers.TagSerializer(data=request.data)
@@ -109,7 +136,7 @@ class TagViewSet(viewsets.ModelViewSet):
 class AssignedQuizViewSet(generics.CreateAPIView):
     queryset = models.AssignedQuiz.objects.all()
     serializer_class = serializers.AssignedSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAdminUser]
 
     def post(self, request):
         users = request.data.get('users')
@@ -131,7 +158,7 @@ class QuestionAdminViewSet(viewsets.ModelViewSet):
     Представление для обработки вопросов квизов на стороне администратора.
     """
     serializer_class = serializers.QuestionAdminSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAdminUser]
     # Пустой QuerySet для схемы Swagger.
     queryset = models.Question.objects.none()
 
@@ -174,7 +201,7 @@ class QuestionListAdminViewSet(viewsets.ModelViewSet):
     администратора.
     """
     serializer_class = serializers.QuestionAdminSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAdminUser]
     # Пустой QuerySet для схемы Swagger.
     queryset = models.Volume.objects.none()
 
@@ -198,7 +225,7 @@ class QuizAdminViewSet(viewsets.ModelViewSet):
     Представление для работы с квизами со стороны администратора.
     """
     serializer_class = serializers.QuizAdminSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAdminUser]
 
     def get_queryset(self):
         # для оптимизации запросов к БД, чтобы избежать N+1 проблемы,
@@ -228,7 +255,7 @@ class QuizVolumeViewSet(viewsets.ModelViewSet):
     со стороны администратора.
     """
     serializer_class = serializers.VolumeSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAdminUser]
     # Пустой QuerySet для схемы Swagger.
     queryset = models.Volume.objects.none()
 

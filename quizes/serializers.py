@@ -174,8 +174,11 @@ class UserAnswerSerializer(serializers.ModelSerializer):
 
 class UserQuestionSerializer(serializers.ModelSerializer):
     answers = UserAnswerSerializer(many=True)
-    id = serializers.IntegerField(source='question.id')
-    question_type = serializers.CharField(source='question.question_type')
+    id = serializers.IntegerField(source='question.id', required=True)
+    question_type = serializers.CharField(
+        source='question.question_type', required=True
+    )
+    response_time = serializers.IntegerField(required=True)
 
     class Meta:
         model = UserQuestion
