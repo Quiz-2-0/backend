@@ -15,6 +15,7 @@ from quizes.models import (
     AnswerList,
     AssignedQuiz,
 )
+from user.serializers import Base64ImageField
 
 User = get_user_model()
 
@@ -69,7 +70,6 @@ class AnswerSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'text',
-            'image',
             'answers_list',
         ]
 
@@ -254,7 +254,7 @@ class QuestionAdminSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        fields = ['id', 'question_type', 'text', 'image', 'answers']
+        fields = ['id', 'question_type', 'text', 'answers']
 
     def create(self, validated_data):
         answers_data = validated_data.pop('answers', [])
@@ -321,6 +321,7 @@ class QuizAdminSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, required=False)
     questions = QuestionAdminSerializer(many=True, required=False)
     volumes = VolumeSerializer(many=True, required=False)
+    image = Base64ImageField(required=False)
 
     class Meta:
         model = Quiz
@@ -330,7 +331,7 @@ class QuizAdminSerializer(serializers.ModelSerializer):
                   ]
 
     def create(self, validated_data):
-        tags_data = validated_data.pop('tags', [])
+        _ = validated_data.pop('tags', [])
         quiz = Quiz.objects.create(**validated_data)
 
         # В этом месте мы не добавляем теги, только сохраняем квиз

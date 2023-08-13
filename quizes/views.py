@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, viewsets, status, mixins, generics
 from rest_framework.response import Response
-
+from rest_framework.exceptions import ValidationError
 from quizes import models, serializers
 from django.db.models import Exists, OuterRef
 from django.contrib.auth import get_user_model
@@ -234,16 +234,28 @@ class QuizAdminViewSet(viewsets.ModelViewSet):
         return models.Quiz.objects.prefetch_related('tags').all()
 
     def perform_create(self, serializer):
-        quiz = serializer.save()
         tags_data = self.request.data.get('tags', [])
-        tag_ids = [tag_data.get('id') for tag_data in tags_data]
-        quiz.tags.set(tag_ids)
+        tag_id = tags_data[0].get('id')
+        try:
+            # Пытаемся найти тег по id
+            tag = models.Tag.objects.get(id=tag_id)
+            quiz = serializer.save()
+            # Добавляем тег к квизу
+            quiz.tags.add(tag)
+        except models.Tag.DoesNotExist:
+            raise ValidationError('Тег с указанным id не существует.')
 
     def perform_update(self, serializer):
-        quiz = serializer.save()
         tags_data = self.request.data.get('tags', [])
-        tag_ids = [tag_data.get('id') for tag_data in tags_data]
-        quiz.tags.set(tag_ids)
+        tag_id = tags_data[0].get('id')
+        try:
+            # Пытаемся найти тег по id
+            tag = models.Tag.objects.get(id=tag_id)
+            quiz = serializer.save()
+            # Добавляем тег к квизу
+            quiz.tags.add(tag)
+        except models.Tag.DoesNotExist:
+            raise ValidationError('Тег с указанным id не существует.')
 
     def perform_destroy(self, instance):
         instance.delete()
