@@ -59,7 +59,7 @@ class UserGetViewSet(generics.RetrieveAPIView):
 class DepartmentViewSet(viewsets.ModelViewSet):
     serializer_class = DepartmentSerializer
     queryset = Department.objects.all()
-    permission_classes = (AdminOrReadOnly,)
+    permission_classes = [permissions.IsAdminUser]
 
 
 class UserAdminViewSet(
@@ -69,6 +69,7 @@ class UserAdminViewSet(
 ):
     serializer_class = UserAdminSerializer
     queryset = User.objects.all()
+    permission_classes = [permissions.IsAdminUser]
 
 
 class AvatarListView(generics.ListCreateAPIView):
