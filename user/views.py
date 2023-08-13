@@ -6,7 +6,6 @@ from rest_framework.response import Response
 
 from user.models import User, DefaultAvatar, Department
 from user.serializers import (
-    CustomUser,
     DefaultAvatarReadSerializer,
     DefaultAvatarWriteSerializer,
     DepartmentSerializer,
@@ -19,9 +18,15 @@ from user.utils import password_mail
 from user.permission import AdminOrReadOnly
 
 
-class UserViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+class UserViewSet(
+    mixins.CreateModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
     serializer_class = UserCreateSerializer
     queryset = User.objects.all()
+    permission_classes = [permissions.IsAdminUser]
 
 
 class UserResetPasswordViewSet(generics.CreateAPIView):
@@ -42,6 +47,7 @@ class UserResetPasswordViewSet(generics.CreateAPIView):
 class UserGetViewSet(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     queryset = User.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
@@ -58,8 +64,6 @@ class DepartmentViewSet(viewsets.ModelViewSet):
 
 class UserAdminViewSet(
     mixins.RetrieveModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.DestroyModelMixin,
     mixins.ListModelMixin,
     viewsets.GenericViewSet
 ):
@@ -73,6 +77,7 @@ class AvatarListView(generics.ListCreateAPIView):
     нового аватара.
     """
     queryset = DefaultAvatar.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_serializer_class(self):
         if self.request.method == 'GET':

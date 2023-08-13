@@ -38,9 +38,9 @@ class RatingViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 
     @action(detail=False, methods=['get'])
     def short(self, request):
-        departament = request.user.department.id
+        department = request.user.department.id
         queryset = Rating.objects.filter(
-                user__department=departament
+                user__department=department
             )[:3]
         serializer = RatingShortSerializer(queryset, many=True)
         return response.Response(
