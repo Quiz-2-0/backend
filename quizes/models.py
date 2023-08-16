@@ -11,6 +11,7 @@ class Tag(models.Model):
     name = models.CharField(
         max_length=50,
         unique=True,
+        blank=False,
         verbose_name='Тег'
     )
     color = models.CharField(
