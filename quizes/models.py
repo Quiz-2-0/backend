@@ -216,6 +216,11 @@ class AssignedQuiz(models.Model):
         verbose_name='Квиз'
     )
 
+    pub_date = models.DateField(
+        auto_now=True,
+        verbose_name='Дата назначения'
+    )
+
     class Meta:
         verbose_name = 'Назначенный квиз'
         verbose_name_plural = 'Назначенные квизы'
@@ -458,3 +463,18 @@ class UserAnswerList(models.Model):
 
     def __str__(self):
         return f'{self.user_answer} {self.answer_list}'
+
+
+class QuizImage(models.Model):
+    image = models.ImageField(
+        verbose_name='Изображение квиза',
+        upload_to='quizes/image/default/'
+    )
+    description = models.CharField(verbose_name='Описание', max_length=150)
+
+    class Meta:
+        verbose_name = 'Изображение для квиза'
+        verbose_name_plural = 'Изображения для квизов'
+
+    def __str__(self):
+        return f'{self.description[:50]}'

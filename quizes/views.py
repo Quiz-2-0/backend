@@ -359,4 +359,13 @@ class StatisticApiView(generics.RetrieveAPIView):
                     continue
                 data.append(question)
             return Response(data=data, status=status.HTTP_200_OK)
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        data = {
+            'error': 'квиз не пройден'
+        }
+        return Response(data=data, status=status.HTTP_204_NO_CONTENT)
+
+
+class QuizImageViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    serializer_class = serializers.QuizImageSerializer
+    permission_classes = [permissions.IsAdminUser]
+    queryset = models.QuizImage.objects.all()

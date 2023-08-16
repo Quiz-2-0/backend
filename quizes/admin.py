@@ -11,7 +11,8 @@ from .models import (
     UserQuestion,
     UserAnswer,
     UserAnswerList,
-    AnswerList
+    AnswerList,
+    QuizImage
 )
 
 
@@ -32,7 +33,7 @@ class QuestionAdmin(admin.ModelAdmin):
 
 @admin.register(AssignedQuiz)
 class AssignedQuizAdmin(admin.ModelAdmin):
-    list_display = ('user', 'quiz')
+    list_display = ('user', 'quiz', 'pub_date')
 
 
 @admin.register(Tag)
@@ -73,3 +74,8 @@ class UserAnswerListAdmin(admin.ModelAdmin):
 @admin.register(AnswerList)
 class AnswerListAdmin(admin.ModelAdmin):
     list_display = ('answer', 'text')
+
+
+@admin.register(QuizImage)
+class QuizImageAdmin(admin.ModelAdmin):
+    list_display = ('id', 'description')

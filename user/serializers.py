@@ -85,6 +85,19 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return user
 
 
+class AdminMeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'firstName',
+            'lastName',
+            'email',
+            'position',
+            'avatar'
+        ]
+
+
 class UserAdminSerializer(serializers.ModelSerializer):
     department = serializers.SlugRelatedField(
         slug_field='name',

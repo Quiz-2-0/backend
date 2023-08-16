@@ -14,6 +14,7 @@ from quizes.models import (
     Statistic,
     AnswerList,
     AssignedQuiz,
+    QuizImage
 )
 from user.serializers import Base64ImageField
 
@@ -375,4 +376,15 @@ class AssignedSerializer(serializers.ModelSerializer):
         fields = [
             'users',
             'quizes',
+        ]
+
+
+class QuizImageSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = QuizImage
+        fields = [
+            'id',
+            'image',
+            'description',
         ]

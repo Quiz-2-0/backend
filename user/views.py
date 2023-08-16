@@ -12,10 +12,10 @@ from user.serializers import (
     UserCreateSerializer,
     UserResetPasswordSerializer,
     UserSerializer,
-    UserAdminSerializer
+    UserAdminSerializer,
+    AdminMeSerializer
 )
 from user.utils import password_mail
-from user.permission import AdminOrReadOnly
 
 
 class UserViewSet(
@@ -68,7 +68,7 @@ class UserAdminViewSet(
     viewsets.GenericViewSet
 ):
     serializer_class = UserAdminSerializer
-    queryset = User.objects.all()
+    queryset = User.objects.filter(role='EMP').all()
     permission_classes = [permissions.IsAdminUser]
 
 
@@ -96,3 +96,15 @@ class AvatarListView(generics.ListCreateAPIView):
         avatar_url = request.user.avatar.url if request.user.avatar else None
         response.data['avatar'] = avatar_url
         return response
+
+
+class AdminMeAPIView(generics.RetrieveAPIView):
+    serializer_class = AdminMeSerializer
+    queryset = User.objects.all()
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_staff:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        serializer = AdminMeSerializer(request.user)
+        return Response(status=status.HTTP_200_OK, data=serializer.data)

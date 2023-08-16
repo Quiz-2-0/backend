@@ -7,17 +7,20 @@ from quizes.views import (
     QuestionListAdminViewSet,
     QuizVolumeViewSet,
     TagViewSet,
-    AssignedQuizViewSet
+    AssignedQuizViewSet,
+    QuizImageViewSet
 )
 from user.views import (
     DepartmentViewSet,
     UserViewSet,
-    UserAdminViewSet
+    UserAdminViewSet,
+    AdminMeAPIView
 )
 
 router_v1 = DefaultRouter()
 router_v1.register('levels', QuizLevelViewSet, basename='quiz-levels')
 router_v1.register('tags', TagViewSet, basename='quiz-tags')
+router_v1.register('quizes/images', QuizImageViewSet)
 router_v1.register(
     r'quizes/(?P<quiz_id>[\d]+)/questions', QuestionAdminViewSet,
     basename='quiz-questions'
@@ -38,6 +41,7 @@ router_v1.register('users/departments', DepartmentViewSet)
 
 urlpatterns = [
     path('quizes/assigned_list/', AssignedQuizViewSet.as_view()),
+    path('users/me/', AdminMeAPIView.as_view()),
     path('', include(router_v1.urls)),
 ]
 

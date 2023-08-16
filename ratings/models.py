@@ -107,6 +107,8 @@ class Rating(models.Model):
 
     @property
     def pass_progress(self):
+        if self.user.department.quizes.count() == 0:
+            return 0
         return int(
             self.count_passed / (self.user.department.quizes.count() / 100)
         )
@@ -131,6 +133,8 @@ class Rating(models.Model):
 
     @property
     def right_precent(self):
+        if self.answered_questions == 0:
+            return 0
         return int(
             self.right_questions / (self.answered_questions / 100)
         )
