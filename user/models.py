@@ -91,8 +91,7 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return (
-            f'{self.firstName} - {self.lastName[0]}.'
-            f'{self.patronymic[0]+"."  if self.patronymic else ""}'
+            f'{self.lastName} {self.firstName}'
         )
 
     @property
