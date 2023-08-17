@@ -341,17 +341,10 @@ class QuizAdminSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         tags_data = validated_data.pop('tags', [])
-
-        # Удаляем текущие связи между квизом и тегами
-        instance.tags.clear()
-
-        # Обновляем поля квиза
         instance = super().update(instance, validated_data)
 
         tag_ids = [tag_data.get('id') for tag_data in tags_data]
-
-        # Устанавливаем новые связи
-        instance.tags.add(*tag_ids)
+        instance.tags.set(tag_ids)  # Обновляем теги
 
         return instance
 
