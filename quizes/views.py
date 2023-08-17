@@ -341,7 +341,15 @@ class StatisticApiView(generics.RetrieveAPIView):
         user = request.user
         # TODO запросы с джойнами
         stat = get_object_or_404(models.Statistic, quiz=quiz, user=user)
+        info = 'квиз не пройден'
+        if stat.is_completed and not stat.is_passed:
+            info = (f'Вы ответили правильно менее чем на {stat.quiz.to_passed}'
+                    ' вопросов')
         if stat.is_passed:
+            info = (
+                f'Вы ответили правильно на {stat.count_right}'
+                f' вопросов из {stat.quiz.to_passed}'
+            )
             data = []
             for user_question in stat.user_questions.all():
                 question_type = user_question.question.question_type
@@ -361,15 +369,12 @@ class StatisticApiView(generics.RetrieveAPIView):
                     # TODO подумать над обработкой ошибки
                     continue
                 data.append(question)
-            return Response(data=data, status=status.HTTP_200_OK)
-        data = {
-            'info': 'квиз не пройден'
+        result = {
+            'result': stat.is_passed,
+            'info': info,
+            'statistic': data
         }
-        if stat.is_completed:
-            data = {
-                'info': f'Вы ответили правильно менее чем на {stat.quiz.to_passed} вопросов'
-            }
-        return Response(data=data, status=status.HTTP_200_OK)
+        return Response(data=result, status=status.HTTP_200_OK)
 
 
 class QuizImageViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
