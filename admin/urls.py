@@ -8,13 +8,16 @@ from quizes.views import (
     QuizVolumeViewSet,
     TagViewSet,
     AssignedQuizViewSet,
-    QuizImageViewSet
+    QuizImageViewSet,
+    AssignedAPIView,
+    AssignedQuizUpdateAPIView,
+    AssignedQuizDeleteAPIView
 )
 from user.views import (
     DepartmentViewSet,
     UserViewSet,
     UserAdminViewSet,
-    AdminMeAPIView
+    AdminMeAPIView,
 )
 
 router_v1 = DefaultRouter()
@@ -41,6 +44,9 @@ router_v1.register('users/departments', DepartmentViewSet)
 
 urlpatterns = [
     path('quizes/assigned_list/', AssignedQuizViewSet.as_view()),
+    path('quizes/assigned/', AssignedAPIView.as_view()),
+    path('quizes/assigned/update/', AssignedQuizUpdateAPIView.as_view()),
+    path('quizes/assigned/delete/', AssignedQuizDeleteAPIView.as_view()),
     path('users/me/', AdminMeAPIView.as_view()),
     path('', include(router_v1.urls)),
 ]
