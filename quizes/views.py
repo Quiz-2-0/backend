@@ -6,6 +6,7 @@ from quizes import models, serializers
 from django.db.models import Exists, OuterRef
 from django.contrib.auth import get_user_model
 from django.db.models import F
+from datetime import datetime, timedelta
 
 User = get_user_model()
 
@@ -369,3 +370,99 @@ class QuizImageViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = serializers.QuizImageSerializer
     permission_classes = [permissions.IsAdminUser]
     queryset = models.QuizImage.objects.all()
+
+
+class AssignedAPIView(generics.ListAPIView):
+    serializer_class = serializers.AssignedSerializer
+    permission_classes = [permissions.IsAdminUser]
+    queryset = models.AssignedQuiz.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        def create_list(queryset, quizes, status):
+            for item in queryset:
+                if item.quiz.id not in quizes:
+                    quizes[item.quiz.id] = {}
+                    quizes[item.quiz.id]['name'] = item.quiz.name
+                    quizes[item.quiz.id]['department'] = (
+                        item.quiz.directory.name if item.quiz.directory else None
+                    )
+                    quizes[item.quiz.id]['status'] = status
+                    quizes[item.quiz.id]['users'] = []
+                stat, _ = models.Statistic.objects.get_or_create(
+                    user=item.user, quiz=item.quiz
+                )
+                user = {
+                    'id': item.user.id,
+                    'name': item.user.full_name,
+                    'department': (
+                        item.user.department.name if item.user.department else None
+                    ),
+                    'position': item.user.position,
+                    'date': item.pub_date,
+                    'is_passed': stat.is_passed
+                }
+                quizes[item.quiz.id]['users'].append(user)
+            return quizes
+        now = datetime.today().date()
+        statuses = {
+            '3 дня': 4,
+            '1 неделя': 8,
+            '2 недели': 15,
+            'более 2-х недель': 9999
+        }
+        data = {}
+        old_value = 0
+        for key, value in statuses.items():
+            qs = models.AssignedQuiz.objects.filter(
+                pub_date__gt=now - timedelta(days=value),
+                pub_date__lte=now - timedelta(days=old_value),
+            )
+            old_value = value
+            if qs:
+                data[key] = {}
+                data[key] = create_list(qs, data[key], key)
+        return Response(data=data)
+
+
+class AssignedQuizUpdateAPIView(generics.CreateAPIView):
+    queryset = models.AssignedQuiz.objects.all()
+    serializer_class = serializers.AssignedSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def post(self, request):
+        users = request.data.get('users')
+        quizes = request.data.get('quizes')
+        for user in users:
+            for quiz in quizes:
+                # TODO использовать сериализатор для получения объектов
+                #  и что-то вроде bulk_update для создания записей
+                q = get_object_or_404(models.Quiz, id=quiz['id'])
+                u = get_object_or_404(User, id=user['id'])
+                assigned = models.AssignedQuiz.objects.filter(
+                    user=u, quiz=q
+                ).first()
+                if assigned:
+                    assigned.save()
+        return Response(status=status.HTTP_201_CREATED)
+
+
+class AssignedQuizDeleteAPIView(generics.CreateAPIView):
+    queryset = models.AssignedQuiz.objects.all()
+    serializer_class = serializers.AssignedSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def post(self, request):
+        users = request.data.get('users')
+        quizes = request.data.get('quizes')
+        for user in users:
+            for quiz in quizes:
+                # TODO использовать сериализатор для получения объектов
+                #  и что-то вроде bulk_update для создания записей
+                q = get_object_or_404(models.Quiz, id=quiz['id'])
+                u = get_object_or_404(User, id=user['id'])
+                assigned = models.AssignedQuiz.objects.filter(
+                    user=u, quiz=q
+                ).first()
+                if assigned:
+                    assigned.delete()
+        return Response(status=status.HTTP_201_CREATED)
