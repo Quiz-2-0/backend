@@ -306,7 +306,8 @@ class StatisticApiView(generics.RetrieveAPIView):
                 data['answers'].append({
                         'answer_text': answer.text,
                         'answered': answered,
-                        'answer_right': is_right
+                        'answer_right': is_right,
+                        'is_right': answer.is_right
                     })
             return data
 
@@ -333,14 +334,23 @@ class StatisticApiView(generics.RetrieveAPIView):
             data['user_answer'] = (
                 user_question.user_answers.first().answer_text
             )
+            data['is_right'] = user_question.is_right
             return data
 
         quiz = self.kwargs.get('quiz_id')
         user = request.user
         # TODO запросы с джойнами
         stat = get_object_or_404(models.Statistic, quiz=quiz, user=user)
+        data = []
+        info = 'квиз не пройден'
+        if stat.is_completed and not stat.is_passed:
+            info = (f'Вы ответили правильно менее чем на {stat.quiz.to_passed}'
+                    ' вопросов')
         if stat.is_passed:
-            data = []
+            info = (
+                f'Вы ответили правильно на {stat.count_right}'
+                f' вопросов из {stat.count_questions}'
+            )
             for user_question in stat.user_questions.all():
                 question_type = user_question.question.question_type
                 question = {
@@ -359,11 +369,12 @@ class StatisticApiView(generics.RetrieveAPIView):
                     # TODO подумать над обработкой ошибки
                     continue
                 data.append(question)
-            return Response(data=data, status=status.HTTP_200_OK)
-        data = {
-            'info': 'квиз не пройден'
+        result = {
+            'result': stat.is_passed,
+            'info': info,
+            'statistics': data
         }
-        return Response(data=data, status=status.HTTP_200_OK)
+        return Response(data=result, status=status.HTTP_200_OK)
 
 
 class QuizImageViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
