@@ -241,7 +241,7 @@ class QuizAdminViewSet(viewsets.ModelViewSet):
             tag = models.Tag.objects.get(id=tag_id)
             quiz = serializer.save()
             # Добавляем тег к квизу
-            quiz.tags.add(tag)
+            quiz.tags.set(tag)
         except models.Tag.DoesNotExist:
             raise ValidationError('Тег с указанным id не существует.')
 
@@ -253,7 +253,7 @@ class QuizAdminViewSet(viewsets.ModelViewSet):
             tag = models.Tag.objects.get(id=tag_id)
             quiz = serializer.save()
             # Добавляем тег к квизу
-            quiz.tags.add(tag)
+            quiz.tags.set(tag)
         except models.Tag.DoesNotExist:
             raise ValidationError('Тег с указанным id не существует.')
 
@@ -360,9 +360,9 @@ class StatisticApiView(generics.RetrieveAPIView):
                 data.append(question)
             return Response(data=data, status=status.HTTP_200_OK)
         data = {
-            'error': 'квиз не пройден'
+            'info': 'квиз не пройден'
         }
-        return Response(data=data, status=status.HTTP_204_NO_CONTENT)
+        return Response(data=data, status=status.HTTP_200_OK)
 
 
 class QuizImageViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
