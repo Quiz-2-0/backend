@@ -234,16 +234,28 @@ class QuizAdminViewSet(viewsets.ModelViewSet):
         return models.Quiz.objects.prefetch_related('tags').all()
 
     def perform_create(self, serializer):
-        quiz = serializer.save()
         tags_data = self.request.data.get('tags', [])
-        tag_ids = [tag_data.get('id') for tag_data in tags_data]
-        quiz.tags.set(tag_ids)
+        tag_id = tags_data[0].get('id')
+        try:
+            # Пытаемся найти тег по id
+            tag = models.Tag.objects.get(id=tag_id)
+            quiz = serializer.save()
+            # Добавляем тег к квизу
+            quiz.tags.add(tag)
+        except models.Tag.DoesNotExist:
+            raise ValidationError('Тег с указанным id не существует.')
 
     def perform_update(self, serializer):
-        quiz = serializer.save()
         tags_data = self.request.data.get('tags', [])
-        tag_ids = [tag_data.get('id') for tag_data in tags_data]
-        quiz.tags.set(tag_ids)
+        tag_id = tags_data[0].get('id')
+        try:
+            # Пытаемся найти тег по id
+            tag = models.Tag.objects.get(id=tag_id)
+            quiz = serializer.save()
+            # Добавляем тег к квизу
+            quiz.tags.add(tag)
+        except models.Tag.DoesNotExist:
+            raise ValidationError('Тег с указанным id не существует.')
 
     def perform_destroy(self, instance):
         instance.delete()
