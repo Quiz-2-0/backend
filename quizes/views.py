@@ -336,7 +336,7 @@ class StatisticApiView(generics.RetrieveAPIView):
         if stat.is_passed:
             info = (
                 f'Вы ответили правильно на {stat.count_right}'
-                f' вопросов из {stat.quiz.to_passed}'
+                f' вопросов из {stat.count_questions}'
             )
             data = []
             for user_question in stat.user_questions.all():
@@ -360,7 +360,7 @@ class StatisticApiView(generics.RetrieveAPIView):
         result = {
             'result': stat.is_passed,
             'info': info,
-            'statistic': data
+            'statistics': data
         }
         return Response(data=result, status=status.HTTP_200_OK)
 
