@@ -98,6 +98,10 @@ class CustomUser(AbstractUser):
     def is_admin(self):
         return self.role == self.UserRoleChoice.ADMIN or self.is_superuser
 
+    @property
+    def full_name(self):
+        return f'{self.lastName} {self.firstName} {self.patronymic}'
+
 
 class DefaultAvatar(models.Model):
     avatar = models.ImageField(upload_to='predefined_avatars/')

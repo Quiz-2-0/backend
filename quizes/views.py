@@ -6,6 +6,7 @@ from quizes import models, serializers
 from django.db.models import Exists, OuterRef
 from django.contrib.auth import get_user_model
 from django.db.models import F
+from datetime import datetime
 
 User = get_user_model()
 
@@ -305,7 +306,8 @@ class StatisticApiView(generics.RetrieveAPIView):
                 data['answers'].append({
                         'answer_text': answer.text,
                         'answered': answered,
-                        'answer_right': is_right
+                        'answer_right': is_right,
+                        'is_right': answer.is_right
                     })
             return data
 
@@ -332,6 +334,7 @@ class StatisticApiView(generics.RetrieveAPIView):
             data['user_answer'] = (
                 user_question.user_answers.first().answer_text
             )
+            data['is_right'] = user_question.is_right
             return data
 
         quiz = self.kwargs.get('quiz_id')
@@ -362,6 +365,10 @@ class StatisticApiView(generics.RetrieveAPIView):
         data = {
             'info': 'квиз не пройден'
         }
+        if stat.is_completed:
+            data = {
+                'info': f'Вы ответили правильно менее чем на {stat.quiz.to_passed} вопросов'
+            }
         return Response(data=data, status=status.HTTP_200_OK)
 
 

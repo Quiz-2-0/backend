@@ -90,9 +90,9 @@ class QuestionSerializer(serializers.ModelSerializer):
     # TODO annotate
     def get_is_answered(self, obj):
         user = self.context['request'].user
-        stat = Statistic.objects.get_or_create(user=user, quiz=obj.quiz)
+        stat, _ = Statistic.objects.get_or_create(user=user, quiz=obj.quiz)
         user_question = UserQuestion.objects.filter(
-            statistic=stat[0].id, question=obj
+            statistic=stat.id, question=obj
         ).first()
         return True if user_question else False
 
@@ -388,3 +388,34 @@ class QuizImageSerializer(serializers.ModelSerializer):
             'image',
             'description',
         ]
+
+
+# class AssignedListUserSerializer(serializers.ModelSerializer):
+
+#     class Meta:
+#         model = User
+#         fields = [
+#             'id',
+#             'full_name',
+#             'department',
+#             'position',
+#             'status',
+#         ]
+
+
+# class AssignedListSerializer(serializers.Serializer):
+#     users = serializers.SerializerMethodField()
+
+#     def get_users(self, obj):
+#         queryset = User.objects.filter(assigned=obj).annotate(
+#             status=
+#         )
+
+#     class Meta:
+#         model = AssignedQuiz
+#         fields = [
+#             'id',
+#             'quiz',
+#             'department',
+#             'status',
+#         ]
