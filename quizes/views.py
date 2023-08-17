@@ -243,8 +243,13 @@ class QuizAdminViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         quiz = serializer.save()
         tags_data = self.request.data.get('tags', [])
-        tag_ids = [get_object_or_404(models.Tag, id=tag_data.get('id')) for tag_data in tags_data]
-        quiz.tags.set(tag_ids)
+        tag_ids = [tag_data.get('id') for tag_data in tags_data]
+
+        # Удаляем текущие связи между квизом и тегами
+        quiz.tags.clear()
+
+        # Устанавливаем новые связи
+        quiz.tags.add(*tag_ids)
 
     def perform_destroy(self, instance):
         instance.delete()
