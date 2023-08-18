@@ -51,6 +51,7 @@ class NotComplitedQuizViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
                 quiz__id=OuterRef('id'), user__id=user.id
             ))
         ).filter(
+            statistics__user=user,
             statistics__count_answered__gt=0,
             statistics__count_questions__gt=F('statistics__count_answered')
         )

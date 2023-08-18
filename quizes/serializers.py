@@ -339,14 +339,14 @@ class QuizAdminSerializer(serializers.ModelSerializer):
 
         return quiz
 
-    def update(self, instance, validated_data):
-        tags_data = validated_data.pop('tags', [])
-        instance = super().update(instance, validated_data)
+    # def update(self, instance, validated_data):
+    #     tags_data = validated_data.pop('tags', [])
+    #     instance = super().update(instance, validated_data)
 
-        tag_ids = [tag_data.get('id') for tag_data in tags_data]
-        instance.tags.set(tag_ids)  # Обновляем теги
+    #     tag_ids = [tag_data.get('id') for tag_data in tags_data]
+    #     instance.tags.set(tag_ids)  # Обновляем теги
 
-        return instance
+    #     return instance
 
 
 class UserAssignedSerializer(serializers.ModelSerializer):
