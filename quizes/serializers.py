@@ -319,7 +319,7 @@ class QuizAdminSerializer(serializers.ModelSerializer):
     """
     Сериализатор для работы с квизами на стороне администратора.
     """
-    tags = TagSerializer(many=True, required=False)
+    tags = TagSerializer(many=True, required=False, read_only=True)
     questions = QuestionAdminSerializer(many=True, required=False)
     volumes = VolumeSerializer(many=True, required=False)
     image = Base64ImageField(required=False)
