@@ -5,7 +5,7 @@ def password_mail(email, password):
     send_mail(
             'Авторизационные данные',
             f'Ваш пароль для входа: {password}',
-            'ADMIN@example.ru',
+            'corpquiz@yandex.ru',
             (email,),
             fail_silently=False,
         )

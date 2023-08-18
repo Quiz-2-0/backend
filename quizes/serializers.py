@@ -388,34 +388,3 @@ class QuizImageSerializer(serializers.ModelSerializer):
             'image',
             'description',
         ]
-
-
-# class AssignedListUserSerializer(serializers.ModelSerializer):
-
-#     class Meta:
-#         model = User
-#         fields = [
-#             'id',
-#             'full_name',
-#             'department',
-#             'position',
-#             'status',
-#         ]
-
-
-# class AssignedListSerializer(serializers.Serializer):
-#     users = serializers.SerializerMethodField()
-
-#     def get_users(self, obj):
-#         queryset = User.objects.filter(assigned=obj).annotate(
-#             status=
-#         )
-
-#     class Meta:
-#         model = AssignedQuiz
-#         fields = [
-#             'id',
-#             'quiz',
-#             'department',
-#             'status',
-#         ]

@@ -51,6 +51,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
     """
     Сериализатор для создания пользователя с определёнными полями.
     """
+    id = serializers.IntegerField(required=False)
     firstName = serializers.CharField(max_length=150, required=True)
     lastName = serializers.CharField(max_length=150, required=True)
     patronymic = serializers.CharField(max_length=150, required=True)
@@ -66,6 +67,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
+            'id',
             'patronymic',
             'department',
             'email',

@@ -27,15 +27,19 @@ SECRET_KEY = 'django-insecure-g!%))6$!%zn)n0oo!y!(9urimzeu-$o&%pt22lcgg&xf)+9dzq
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*', 'localhost', '80.87.106.133']
+ALLOWED_HOSTS = ['*', 'localhost', '80.87.106.133', 'corpquiz.acceleratorpracticum.ru']
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost',
-    'http://80.87.106.133'
+    'http://80.87.106.133',
+    'http://corpquiz.acceleratorpracticum.ru',
+    'https://corpquiz.acceleratorpracticum.ru',
 ]
 CORS_ORIGIN_WHITELIST = [
     'http://localhost',
-    'http://80.87.106.133'
+    'http://80.87.106.133',
+    'http://corpquiz.acceleratorpracticum.ru',
+    'https://corpquiz.acceleratorpracticum.ru',
 ]
 
 
@@ -163,7 +167,13 @@ SIMPLE_JWT = {
 
 AUTH_USER_MODEL = 'user.CustomUser'
 
-EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.filebased.EmailBackend')
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_PORT = os.getenv('EMAIL_PORT')
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS')
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
 
 
