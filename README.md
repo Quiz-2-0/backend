@@ -1,6 +1,7 @@
 # Corporate quiz backend
 
 ![CorpQuiz backend](https://github.com/Corporate-Quiz/backend/actions/workflows/workflow.yml/badge.svg)
+![CorpQuiz backend](https://github.com/Corporate-Quiz/backend/actions/workflows/workflow.yml/badge.svg)
 
 
 **Описание**
@@ -89,6 +90,10 @@ pre-commit run --all-files
 ```
 
 ### Работа с commitizen
+Установите commitizen
+```sh
+pip install commitizen
+```
 Чтобы сгенерировать установленный git-commit, запустите в вашем терминале
 ```sh
 cz commit
