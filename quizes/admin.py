@@ -1,81 +1,108 @@
 from django.contrib import admin
+
 from .models import (
-    Quiz,
     Answer,
-    Question,
+    AnswerList,
     AssignedQuiz,
-    Tag,
+    Question,
+    Quiz,
+    QuizImage,
     QuizLevel,
-    Volume,
     Statistic,
-    UserQuestion,
+    Tag,
     UserAnswer,
     UserAnswerList,
-    AnswerList,
-    QuizImage
+    UserQuestion,
+    Volume,
 )
 
 
 @admin.register(Quiz)
 class QuizAdmin(admin.ModelAdmin):
-    list_display = ('name', 'directory')
+    """Добавление модели Quiz в админку."""
+
+    list_display = ("name", "directory")
 
 
 @admin.register(Answer)
 class AnswerAdmin(admin.ModelAdmin):
-    list_display = ('text', 'question', 'is_right')
+    """Добавление модели Answer в админку."""
+
+    list_display = ("text", "question", "is_right")
 
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ('text', 'quiz')
+    """Добавление модели Question в админку."""
+
+    list_display = ("text", "quiz")
 
 
 @admin.register(AssignedQuiz)
 class AssignedQuizAdmin(admin.ModelAdmin):
-    list_display = ('user', 'quiz', 'pub_date')
+    """Добавление модели AssignedQuiz в админку."""
+
+    list_display = ("user", "quiz", "pub_date")
 
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ('name',)
+    """Добавление модели Tag в админку."""
+
+    list_display = ("name",)
 
 
 @admin.register(QuizLevel)
 class QuizLevelAdmin(admin.ModelAdmin):
-    list_display = ('name',)
+    """Добавление модели QuizLevel в админку."""
+
+    list_display = ("name",)
 
 
 @admin.register(Volume)
 class VolumeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'quiz')
+    """Добавление модели Volume в админку."""
+
+    list_display = ("name", "quiz")
 
 
 @admin.register(Statistic)
 class StatisticAdmin(admin.ModelAdmin):
-    list_display = ('quiz', 'user')
+    """Добавление модели Statistic в админку."""
+
+    list_display = ("quiz", "user")
 
 
 @admin.register(UserQuestion)
 class UserQuestionAdmin(admin.ModelAdmin):
-    list_display = ('statistic', 'question')
+    """Добавление модели UserQuestion в админку."""
+
+    list_display = ("statistic", "question")
 
 
 @admin.register(UserAnswer)
 class UserAnswerAdmin(admin.ModelAdmin):
-    list_display = ('user_question', 'answer', 'answer_text')
+    """Добавление модели UserAnswer в админку."""
+
+    list_display = ("user_question", "answer", "answer_text")
 
 
 @admin.register(UserAnswerList)
 class UserAnswerListAdmin(admin.ModelAdmin):
-    list_display = ('user_answer', 'answer_list')
+    """Добавление модели UserAnswerList в админку."""
+
+    list_display = ("user_answer", "answer_list")
 
 
 @admin.register(AnswerList)
 class AnswerListAdmin(admin.ModelAdmin):
-    list_display = ('answer', 'text')
+    """Добавление модели AnswerList в админку."""
+
+    list_display = ("answer", "text")
 
 
 @admin.register(QuizImage)
 class QuizImageAdmin(admin.ModelAdmin):
-    list_display = ('id', 'description')
+    """Добавление модели QuizImage в админку."""
+
+    list_display = ("id", "description")
