@@ -13,6 +13,9 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from datetime import timedelta
 from pathlib import Path
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,19 +30,19 @@ SECRET_KEY = 'django-insecure-g!%))6$!%zn)n0oo!y!(9urimzeu-$o&%pt22lcgg&xf)+9dzq
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*', 'localhost', '80.87.106.133', 'corpquiz.acceleratorpracticum.ru']
+ALLOWED_HOSTS = ['*', 'localhost', '185.84.162.248', 'corpquiz.zapto.org']
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost',
-    'http://80.87.106.133',
-    'http://corpquiz.acceleratorpracticum.ru',
-    'https://corpquiz.acceleratorpracticum.ru',
+    'http://185.84.162.248',
+    'http://corpquiz.zapto.org',
+    'https://corpquiz.zapto.org',
 ]
 CORS_ORIGIN_WHITELIST = [
     'http://localhost',
-    'http://80.87.106.133',
-    'http://corpquiz.acceleratorpracticum.ru',
-    'https://corpquiz.acceleratorpracticum.ru',
+    'http://185.84.162.248',
+    'http://corpquiz.zapto.org',
+    'https://corpquiz.zapto.org',
 ]
 
 
@@ -183,3 +186,21 @@ EMAIL_ADMIN = EMAIL_HOST_USER
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_URLS_REGEX = r'^/api/.*$'
 CORS_ALLOW_CREDENTIALS = True
+
+# Sentry
+
+sentry_sdk.init(
+    dsn=os.getenv('SENTRY_DSN'),
+    integrations=[DjangoIntegration()],
+    # If you wish to associate users to errors (assuming you are using
+    # django.contrib.auth) you may enable sending PII data.
+    send_default_pii=True,
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    # We recommend adjusting this value in production.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=1.0,
+)
